@@ -54,7 +54,7 @@ public class JTifixity {
     }
 
     public static String checksumRGB(String file) throws IOException, NoSuchAlgorithmException {
-        Tiff tiff = readTIFF(file);
+        Tiff tiff = TiffFileHandler.loadTiffFromFile(file);
         long rgbfrom = tiff.getRGBOffset();
         long rgbto   = rgbfrom+tiff.getRGBLength(); // [StripOffsets, StripByteCounts)
 
@@ -84,99 +84,15 @@ public class JTifixity {
         return digest.toString();
     }
 
-    public static Tiff readTIFF(String file) throws IOException{
-        try (SeekableByteChannel sbc = Files.newByteChannel(Paths.get(file))) {
-            ByteBuffer buf = ByteBuffer.allocate(8);
-
-            // read TIFF header
-            int count = sbc.read(buf);
-
-            // check byte ordering
-            buf.rewind();
-            if(buf.get()==0x4D && buf.get()==0x4D){
-                byteOrder = ByteOrder.BIG_ENDIAN;
-            }
-            System.out.println("Byte Order: "+byteOrder);
-
-            // read IFD offset
-            buf.position(4);
-            int ifdoffset = buf.order(byteOrder).getInt();
-            System.out.println("IFD Offset: "+ifdoffset);
-
-            // read the IFD starting at the specified offset
-            IFD ifd = readIFD(sbc, ifdoffset);
-
-            Tiff tiff = new Tiff(byteOrder);
-            tiff.addIFD(ifd);
-            return tiff;
-        }
-    }
-
-    private static IFD readIFD(SeekableByteChannel sbc, long offset) throws IOException {
-        IFD ifd = new IFD(offset);
-
-        ByteBuffer buf = ByteBuffer.allocate(8);
-        sbc.position(offset);   // set the offset
-
-        int count = sbc.read(buf);
-        buf.rewind();
-        // 2 byte count + 12 bytes per directory
-        short dircount = buf.order(byteOrder).getShort();
-        System.out.println("Dir count: "+dircount);
-
-        // read each Directory
-        sbc.position(offset+2);
-        for(int i=0; i<dircount; i++){
-            readDirectory(sbc, ifd);
-        }
-
-        return ifd;
-    }
-
-    private static void readDirectory(SeekableByteChannel sbc, IFD ifd) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(12);
-        sbc.read(buf);
-        buf.rewind();
-        // bytes:
-        //  0-1  Tag
-        //  2-3  Type
-        //  4-7  Count of indicated type
-        //  8-11 Value offset
-        int tagval = buf.order(byteOrder).getShort();
-        IFDTag tag = IFDTag.getTag(tagval);
-
-        short typeval = buf.order(byteOrder).getShort();
-        IFDType type = IFDType.getType(typeval);
-
-        int count = buf.order(byteOrder).getInt();
-
-        int value = buf.order(byteOrder).getInt();
-
-        System.out.println("Tag: "+tag+"\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: "+printHexInt(value));
-
-        // add directory to IFD object
-        ifd.addDirectory(tag, type, count, value);
-    }
-
-    private static String printHexInt(int value){
-        StringBuffer sb = new StringBuffer();
-        sb.append("(").append(value).append(")");
-
-        for(int i = 0; i < 4; i++) {
-            sb.insert(0, String.format("%02x ", value & 0xFF));
-            value = value>>8;
-        }
-
-        return sb.toString();
-    }
 
     public static void main(String[] args){
         try {
             String hash = checksumRGB("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips.tiff");
+            //String hash = checksumRGB("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips_split_data.tiff");
             System.out.println(hash);
             //readTIFF("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips.tiff");
         } catch (Exception e){
-
+            e.printStackTrace();
         }
     }
 }

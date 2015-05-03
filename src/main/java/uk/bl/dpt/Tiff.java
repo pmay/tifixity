@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by pmay on 20/04/2015.
+ * Class representing a TIFF file.
+ * @author pmay
  */
 public class Tiff {
 
@@ -13,12 +14,18 @@ public class Tiff {
     ArrayList<IFD>      ifds        = null;
 
     /**
-     * Default, no-arg constructor
+     * Default, no-arg constructor. Default to Little Endian Byte order.
      */
     public Tiff(){
         this.ifds = new ArrayList<>();
+        this.byteOrder = ByteOrder.LITTLE_ENDIAN;
     }
 
+    /**
+     * Construct a Tiff object specifying the byte order representation
+     * used in the file.
+     * @param byteOrder the {@link java.nio.ByteOrder} of the Tiff file
+     */
     public Tiff(ByteOrder byteOrder){
         this();
         this.byteOrder = byteOrder;
@@ -26,6 +33,10 @@ public class Tiff {
 
     public void setByteOrder(ByteOrder byteOrder){
         this.byteOrder = byteOrder;
+    }
+
+    public ByteOrder getByteOrder(){
+        return this.byteOrder;
     }
 
     public int numberOfIfds(){

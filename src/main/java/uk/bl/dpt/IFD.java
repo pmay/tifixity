@@ -26,7 +26,7 @@ public class IFD {
         this.offset = offset;
     }
 
-    public void addDirectory(IFDTag tag, IFDType type, int count, int value) {
+    public void addDirectory(IFDTag tag, IFDType type, int count, int[] value) {
         directories.put(tag, new Directory(tag, type, count, value));
     }
 
@@ -35,16 +35,16 @@ public class IFD {
     }
 
     public int getTagValue(IFDTag tag){
-        return directories.get(tag).value;
+        return directories.get(tag).value[0];
     }
 
     public class Directory {
         private IFDTag  tag;
         private IFDType type;
         private int     count;
-        private int     value;
+        private int[]   value;
 
-        public Directory(IFDTag tag, IFDType type, int count, int value){
+        public Directory(IFDTag tag, IFDType type, int count, int[] value){
             this.tag = tag;
             this.type = type;
             this.count = count;

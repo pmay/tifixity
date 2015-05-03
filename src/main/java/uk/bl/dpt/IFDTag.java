@@ -17,6 +17,7 @@ public enum IFDTag {
     CellWidth (264),
     CellLength (265),
     FillOrder (266),
+    DocumentName (269),                 // TIFF 6.0 Section 12
     ImageDescription (270),
     Make (271),
     Model (272),
