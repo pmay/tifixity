@@ -76,45 +76,51 @@ public class TiffFileHandler {
         IFDType type = IFDType.getType(typeval);
 
         int count = buf.order(byteOrder).getInt();
-        int[] value = new int[count];
+        //int[] value = new int[count];
 
-        value[0] = buf.order(byteOrder).getInt();
+        Integer value[] = {buf.order(byteOrder).getInt()};
 
         long curPosition = sbc.position();
 
         if (count>1) {
             // value is a pointer
+            Object[] values;
             switch(type){
                 case ASCII:
-                    char[] desc = readArrayChar(sbc.position(value[0]), byteOrder, count);
-                    System.out.println(desc);
+                    values = readArrayChar(sbc.position(value[0]), byteOrder, count);
                     break;
                 case SHORT:
-                    value = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
+                    values = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
                     break;
                 case LONG:
                 default:
-                    value = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
+                    values = readArrayLong(sbc.position(value[0]), byteOrder, type, count);
                     break;
             }
+            // add directory to IFD object
+            ifd.addDirectory(tag, type, count, values);
 
+            //System.out.println("Tag: "+tag+" ("+tagval+")\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: ");//+printHexIntArray(values));
+        } else {
+            // add directory to IFD object
+            ifd.addDirectory(tag, type, count, value);
+            //System.out.println("Tag: "+tag+" ("+tagval+")\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: "+printHexIntArray(value));
         }
 
-        System.out.println("Tag: "+tag+" ("+tagval+")\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: "+printHexIntArray(value));
+        System.out.println(ifd.getDirectory(tag).toString());
 
-        // add directory to IFD object
-        ifd.addDirectory(tag, type, count, value);
+
 
         // reset position in channel
         sbc.position(curPosition);
     }
 
-    private static char[] readArrayChar(SeekableByteChannel sbc, ByteOrder byteOrder, int length) throws IOException {
+    private static Character[] readArrayChar(SeekableByteChannel sbc, ByteOrder byteOrder, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length);
         sbc.read(buf);
         buf.rewind();
 
-        char[] desc = new char[length];
+        Character[] desc = new Character[length];
 
         for(int i=0; i<length; i++){
             desc[i] = (char) buf.get();
@@ -123,26 +129,26 @@ public class TiffFileHandler {
         return desc;
     }
 
-    private static int[] readArrayShort(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
+    private static Integer[] readArrayShort(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length*2);
         sbc.read(buf);
         buf.rewind();
 
-        int[] values = new int[length];
+        Integer[] values = new Integer[length];
 
         for(int i=0; i<length; i++){
-            values[i] = buf.order(byteOrder).getShort();
+            values[i] = new Integer(buf.order(byteOrder).getShort());
         }
 
         return values;
     }
 
-    private static int[] readArrayLong(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
+    private static Integer[] readArrayLong(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length*4);
         sbc.read(buf);
         buf.rewind();
 
-        int[] values = new int[length];
+        Integer[] values = new Integer[length];
 
         for(int i=0; i<length; i++){
             values[i] = buf.order(byteOrder).getInt();
@@ -151,8 +157,8 @@ public class TiffFileHandler {
         return values;
     }
 
-    private static String printHexIntArray(int[] value){
-        int[] valCopy = value.clone();
+    private static String printHexIntArray(Integer[] value){
+        Integer[] valCopy = value.clone();
         StringBuffer sb = new StringBuffer();
         //sb.append("(").append(value).append(")");
 

@@ -59,12 +59,12 @@ public class Tiff {
         }
     }
 
-    public long getRGBOffset(){
-        return ifds.get(0).getTagValue(IFDTag.StripOffsets);
+    public Integer[] getRGBOffset(){
+        return (Integer[]) getIFD(0).getDirectory(IFDTag.StripOffsets).getValue();
     }
 
-    public long getRGBLength(){
-        return ifds.get(0).getTagValue(IFDTag.StripByteCounts);
+    public Integer[] getRGBLength(){
+        return (Integer[]) getIFD(0).getDirectory(IFDTag.StripByteCounts).getValue();
     }
 
     @Override

@@ -61,7 +61,7 @@ public enum IFDTag {
         return lookup.get(value);
     }
 
-    private Integer getTypeValue(){
+    public Integer getTypeValue(){
         return this.value;
     }
 }

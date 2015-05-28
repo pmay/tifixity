@@ -6,17 +6,19 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by pmay on 23/04/2015.
  */
 public class TiffFileHandlerTest {
 
-    private static String testTiff   = "/rgbstrips.tiff";
+    private static String testTiff        = "/rgbstrips.tiff";
+    private static String splitTestTiff   = "/rgbstrips_split_data.tiff";
+    private static String nonSeqSplitTiff = "/non_sequential_rgbstrips_split_data.tiff";
 
     @Test
-    public void loadFileAndChecksum() {
+    public void loadFile() {
         try {
             URL url = getClass().getResource(testTiff);
             File f = Paths.get(url.toURI()).toFile();
@@ -38,8 +40,46 @@ public class TiffFileHandlerTest {
             File f = Paths.get(url.toURI()).toFile();
             Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
 
-            assertEquals(8L, tiff.getRGBOffset());          // RGB data starts at byte 8
-            assertEquals(300L, tiff.getRGBLength());        // RGB data is 300 bytes
+            assertArrayEquals(new Integer[]{8}, tiff.getRGBOffset());          // RGB data starts at byte 8
+            assertArrayEquals(new Integer[]{300}, tiff.getRGBLength());        // RGB data is 300 bytes
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void loadSplitRGBFile() {
+        try {
+            URL url = getClass().getResource(splitTestTiff);
+            File f = Paths.get(url.toURI()).toFile();
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+
+            assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
+
+            Integer[] rgbOffsets = tiff.getRGBOffset();
+            assertArrayEquals(new Integer[]{8, 0x1e8}, rgbOffsets);
+
+            Integer[] rgbLength = tiff.getRGBLength();
+            assertArrayEquals(new Integer[]{150, 150}, rgbLength);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void loadNonSeqSplitRGBFile() {
+        try {
+            URL url = getClass().getResource(nonSeqSplitTiff);
+            File f = Paths.get(url.toURI()).toFile();
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+
+            assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
+
+            Integer[] rgbOffsets = tiff.getRGBOffset();
+            assertArrayEquals(new Integer[]{0x1e8, 8}, rgbOffsets);
+
+            Integer[] rgbLength = tiff.getRGBLength();
+            assertArrayEquals(new Integer[]{150, 150}, rgbLength);
         } catch (Exception e){
             e.printStackTrace();
         }

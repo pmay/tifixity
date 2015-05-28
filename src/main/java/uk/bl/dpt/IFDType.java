@@ -36,7 +36,7 @@ public enum IFDType {
         return lookup.get(value);
     }
 
-    private Short getTypeValue(){
+    public Short getTypeValue(){
         return this.bytevalue;
     }
 }
