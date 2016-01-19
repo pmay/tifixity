@@ -1,3 +1,19 @@
+/**
+ * Copyright 2016 Peter May
+ * Author: Peter May
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package uk.bl.dpt;
 
 import java.io.IOException;
@@ -5,23 +21,21 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 
 /**
- * Created by pmay on 05/04/2015.
+ * Main application and Tifixity API.
  */
-public class JTifixity {
+public class Tifixity {
 
     private static ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
 
     /**
-     * Returns the file and RGB checksum for the specified file.
+     * Returns the file and image payload checksums for the specified file.
      * @param file
      * @return
      * @throws NoSuchAlgorithmException
@@ -55,7 +69,14 @@ public class JTifixity {
 
     private static int BUFFERSIZE = 100;
 
-    public static String checksumRGB(String file) throws IOException, NoSuchAlgorithmException {
+    /**
+     * Checksums the image payload of the specified file.
+     * @param file
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
+    public static String checksumPayload(String file) throws IOException, NoSuchAlgorithmException {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(file);
         Integer[] rgbIndexes = tiff.getRGBOffset();
         Integer[] rgbLengths = tiff.getRGBLength();
@@ -63,8 +84,7 @@ public class JTifixity {
         assert(rgbIndexes.length == rgbLengths.length);
 
         MessageDigest md = MessageDigest.getInstance("MD5");
-//        try (InputStream is = Files.newInputStream(Paths.get(file))) {
-//            DigestInputStream dis = new DigestInputStream(is, md);
+
         try (SeekableByteChannel sbc = Files.newByteChannel(Paths.get(file))) {
             ByteBuffer buf = ByteBuffer.allocate(BUFFERSIZE);
 
@@ -78,15 +98,9 @@ public class JTifixity {
 
                 totalBytesRead=0;
                 bytesRead=0;
-//                StringBuilder sbbuf = new StringBuilder();
                 while(totalBytesRead < rgbLengths[j]){
                     bytesRead = sbc.read(buf);
                     buf.flip();
-
-//                    while(buf.hasRemaining()){
-//                        sbbuf.append(String.format("%02x", buf.get()));
-//                    }
-//                    buf.rewind();
 
                     if(totalBytesRead+bytesRead>=rgbLengths[j]){
                         md.update(buf.array(), buf.position(), (rgbLengths[j]-totalBytesRead));
@@ -97,30 +111,7 @@ public class JTifixity {
                     totalBytesRead += bytesRead;
                     buf.rewind();
                 }
-//                System.out.println(sbbuf.toString());
             }
-
-//            int lastIndex = 0;
-//            int curIndex = 0;
-//            for(int j=0; j<rgbIndexes.length; j++){
-//                // Do not assume split data is in sequential order in the file.
-//                // If next split of data comes earlier in the TIFF byte stream
-//                // than the last split, reset the inputstream and skip to the
-//                // split index
-//                if(rgbIndexes[j]<lastIndex) {
-//                    is.reset();
-//                    curIndex=0;
-//                }
-//
-//                dis.skip(rgbIndexes[j]-curIndex);
-//
-//                for(int i=0; i<rgbLengths[j]; i++) {
-//                    dis.read();
-//                }
-//
-//                curIndex=rgbIndexes[j]+rgbLengths[j];
-//                lastIndex = rgbIndexes[j];
-//            }
         }
 
         StringBuilder digest = new StringBuilder();
@@ -132,13 +123,14 @@ public class JTifixity {
     }
 
 
+    /**
+     * Main application that checksums the image payload of the supplied TIFF file.
+     * @param args
+     */
     public static void main(String[] args){
         try {
-            String hash = checksumRGB("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips.tiff");
-            //String hash = checksumRGB("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips_split_data.tiff");
-            //String hash = checksumRGB("C:/Users/pmay/Repos/jTifixity/src/test/resources/non_sequential_rgbstrips_split_data.tiff");
+            String hash = checksumPayload(args[0]);
             System.out.println(hash);
-            //readTIFF("C:/Users/pmay/Repos/jTifixity/src/test/resources/rgbstrips.tiff");
         } catch (Exception e){
             e.printStackTrace();
         }

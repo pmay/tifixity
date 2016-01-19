@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>uk.bl.dpt</groupId>
-    <artifactId>jTifixity</artifactId>
+    <artifactId>tifixity</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>jTifixity</name>
+    <name>Tifixity</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

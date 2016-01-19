@@ -1,104 +1,161 @@
+/**
+ * Copyright 2016 Peter May
+ * Author: Peter May
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package uk.bl.dpt;
 
-import com.sun.jmx.remote.internal.ClientNotifForwarder;
 import org.junit.Test;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URL;
-import java.nio.ByteOrder;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
 /**
- * Created by pmay on 03/04/2015.
+ * Tests relating to the checksumming functionality provided by Tifixity
  */
 public class ChecksumTest {
 
-    private static String testTiff                  = "/rgbstrips.tiff";
-    private static String testTiffFullCS            = "c31ffd70cb87c269d69f2b11c7e09ec4";
-    private static String testTiffRGBCS             = "5478865efdfc945d291b584402d34a33";
-
-    private static String testTiffSplit             = "/rgbstrips_split_data.tiff";
-    private static String testTiffFullCS_split      = "a59d833a29c12fe16d893aea0e1ee8c6";
-
-    private static String testNonSeqTiffSplit       = "/non_sequential_rgbstrips_split_data.tiff";
-    private static String testNonSeqRGBCS           = "427de87be70c968f257c1c870833435b";
-    private static String testTiffFullCS_split_ns   = "5b885e76221c532d4057d16564ad38e1";
+    // 1: TIFF containing single Strip of RGB data
+    private static String singleStrip               = "/T_one_strip.tiff";
+    private static String singleStrip_CS            = "d987f537e0e252df1ebb0427a2bd83c6";
+    private static String singleStrip_CS_RGB        = "1d4808fbbc37c098520c4e927cccf332";
 
     /**
-     * Checksum basic test TIFF.
+     * Check MD5 of entire Single Strip TIFF.
      */
     @Test
-    public void loadFileAndChecksum() {
+    public void checkSingleStrip_MD5() {
         try {
-            URL url = getClass().getResource(testTiff);
+            URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = JTifixity.checksum(f.getPath());
-            assertEquals(testTiffFullCS, jtifcs);
+            String jtifcs = Tifixity.checksum(f.getPath());
+            assertEquals(singleStrip_CS, jtifcs);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
     /**
-     * Checksum RGB data of basic test TIFF
+     * Check MD5 of RGB data from Single Strip TIFF
      */
     @Test
-    public void checksumRGBdata() {
+    public void checkSingleStripRGB_MD5() {
         try {
-            URL url = getClass().getResource(testTiff);
+            URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = JTifixity.checksumRGB(f.getPath());
-            assertEquals(testTiffRGBCS, rgbcs);
+            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            assertEquals(singleStrip_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
+    // 2: TIFF containing two Strips of RGB data in sequential order (i.e. within the file
+    //    the Strips are ordered by top half of image followed by bottom half) and the
+    //    Strips are referenced in Strip order.
+    //    Image looks correct.
+    private static String twoStrips_seq_normal      = "/T_two_strips_seq.tiff";
+    private static String twoStrips_seq_normal_CS   = "cf657425a19bb9d96d8b631ba259c636";
+    // RGB CS same as singleStrip_CS_RGB
+
     /**
-     * Checksum split data test TIFF
+     * Check RGB data MD5 in a sequential two-Split split-ordered TIFF.
+     * Expect MD5 == single strip RGB MD5
      */
     @Test
-    public void checksumSplitTiff(){
+    public void checkTwoSplitSeqRGB_MD5(){
         try {
-            URL url = getClass().getResource(testTiffSplit);
+            URL url = getClass().getResource(twoStrips_seq_normal);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = JTifixity.checksum(f.getPath());
-            assertEquals(testTiffFullCS_split, jtifcs);
+            String jtifcs = Tifixity.checksumPayload(f.getPath());
+            assertEquals(singleStrip_CS_RGB, jtifcs);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
+    // 3: TIFF containing two Strips of RGB data in sequential order (i.e. within the file
+    //    the Strips are ordered by top half of image followed by bottom half) and the
+    //    Strips are referenced in reverse Strip order (i.e. 2nd Strip comes first)
+    //    Image looks incorrect.
+    private static String twoStrips_seq_reverse        = "/T_two_strips_seq_reverse.tiff";
+    private static String twoStrips_seq_reverse_CS     = "52d28f6d2051ba80256fb5087fe006bd";
+    private static String twoStrips_seq_reverse_CS_RGB = "b06b65a47188153c37c8229a95b931db";
+
     /**
-     * Checksum RGB data of split data test TIFF. Should be equivalent of
-     * basic test TIFF (i.e. the RGB data is the same)
+     * Check RGB data MD5 in a sequential two-Split reverse split-ordered
+     * TIFF.
      */
     @Test
-    public void checksumSplitRGBdata() {
+    public void checkTwoSplitSeqReverseRGB_MD5() {
         try {
-            URL url = getClass().getResource(testTiffSplit);
+            URL url = getClass().getResource(twoStrips_seq_reverse);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = JTifixity.checksumRGB(f.getPath());
-            assertEquals(testTiffRGBCS, rgbcs);
+            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            assertEquals(twoStrips_seq_reverse_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
+    // 4: TIFF containing two Strips of RGB data in non-sequential order (i.e. within the
+    //    file the Strips are ordered by bottom half of image followed by top half) and the
+    //    Strips are referenced in Strip order (i.e. bottom of image appears at the top).
+    //    Image looks incorrect.
+    private static String twoStrips_nonseq_normal        = "/T_two_strips_non_seq.tiff";
+    private static String twoStrips_nonseq_normal_CS     = "de7df0b6a10ba6e893baaa836f22aca1";
+    private static String twoStrips_nonseq_normal_CS_RGB = "b06b65a47188153c37c8229a95b931db";
+
     /**
-     * Tests the RGB checksum when the rgb data is in non-sequential splits.
+     * Check RGB data MD5 in a non-sequential two-Split split-ordered
+     * TIFF.
      */
     @Test
-    public void checksumNonSequentialSplitRGBdata(){
+    public void checkTwoSplitNonSeqRGB_MD5(){
         try {
-            URL url = getClass().getResource(testNonSeqTiffSplit);
+            URL url = getClass().getResource(twoStrips_nonseq_normal);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = JTifixity.checksumRGB(f.getPath());
-            assertEquals(testNonSeqRGBCS, rgbcs);
-            //assertEquals(testNonSeqRGBCS, rgbcs);
+            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            assertEquals(twoStrips_nonseq_normal_CS_RGB, rgbcs);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    // 5: TIFF containing two Strips of RGB data in non-sequential order (i.e. within the
+    //    file the Strips are ordered by bottom half of image followed by top half) and the
+    //    Strips are referenced in reverse Strip order (i.e. 2nd Strip comes first)
+    //    Image looks correct.
+    private static String twoStrips_nonseq_reverse       = "/T_two_strips_non_seq_reverse.tiff";
+    private static String twoStrips_nonseq_reverse_CS    = "5cebae87db850f9884fde4d40ccc2e63";
+    // RGB CS same as singleStrip_CS_RGB
+
+    /**
+     * Check RGB data MD5 in a non-sequential two-Split reverse split-ordered
+     * TIFF.
+     * Expect MD5 == single strip RGB MD5
+     */
+    @Test
+    public void checkTwoSplitNonSeqReverseRGB_MD5(){
+        try {
+            URL url = getClass().getResource(twoStrips_nonseq_reverse);
+            File f = Paths.get(url.toURI()).toFile();
+            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            assertEquals(singleStrip_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
         }
