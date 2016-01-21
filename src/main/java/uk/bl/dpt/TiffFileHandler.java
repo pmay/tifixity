@@ -28,6 +28,12 @@ import java.nio.file.Paths;
  */
 public class TiffFileHandler {
 
+    /**
+     * Loads a TIFF file into the Tifixity data model.
+     * @param file
+     * @return
+     * @throws IOException
+     */
     public static Tiff loadTiffFromFile(String file) throws IOException {
         Tiff tiff = new Tiff(ByteOrder.LITTLE_ENDIAN);
 
@@ -55,6 +61,13 @@ public class TiffFileHandler {
         }
     }
 
+    /**
+     * Reads the IFD from the specified channel and loads it into the specified TIFF object.
+     * @param sbc
+     * @param offset
+     * @param tiff
+     * @throws IOException
+     */
     private static void readIFD(SeekableByteChannel sbc, long offset, Tiff tiff) throws IOException {
         IFD ifd = new IFD(offset);
 
@@ -73,9 +86,18 @@ public class TiffFileHandler {
             readDirectory(sbc, tiff.getByteOrder(), ifd);
         }
 
+        // Todo: read offset of next IFD and add to TIFF
+
         tiff.addIFD(ifd);
     }
 
+    /**
+     * Reads each directory from the specified byte channel and loads into the specified IFD object.
+     * @param sbc
+     * @param byteOrder
+     * @param ifd
+     * @throws IOException
+     */
     private static void readDirectory(SeekableByteChannel sbc, ByteOrder byteOrder, IFD ifd) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(12);
         sbc.read(buf);
@@ -125,12 +147,18 @@ public class TiffFileHandler {
 
         System.out.println(ifd.getDirectory(tag).toString());
 
-
-
         // reset position in channel
         sbc.position(curPosition);
     }
 
+    /**
+     * Reads a TIFF ASCII array from the specified byte channel and returns an array of Characters.
+     * @param sbc
+     * @param byteOrder
+     * @param length
+     * @return
+     * @throws IOException
+     */
     private static Character[] readArrayChar(SeekableByteChannel sbc, ByteOrder byteOrder, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length);
         sbc.read(buf);
@@ -145,6 +173,15 @@ public class TiffFileHandler {
         return desc;
     }
 
+    /**
+     * Reads a TIFF short array (16-bit unsigned integer) and returns an array of Integers
+     * @param sbc
+     * @param byteOrder
+     * @param type
+     * @param length
+     * @return
+     * @throws IOException
+     */
     private static Integer[] readArrayShort(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length*2);
         sbc.read(buf);
@@ -159,6 +196,15 @@ public class TiffFileHandler {
         return values;
     }
 
+    /**
+     * Reads a TIFF Long array (32-bit unsigned integer) and returns an array of Integers
+     * @param sbc
+     * @param byteOrder
+     * @param type
+     * @param length
+     * @return
+     * @throws IOException
+     */
     private static Integer[] readArrayLong(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(length*4);
         sbc.read(buf);
@@ -171,21 +217,5 @@ public class TiffFileHandler {
         }
 
         return values;
-    }
-
-    private static String printHexIntArray(Integer[] value){
-        Integer[] valCopy = value.clone();
-        StringBuffer sb = new StringBuffer();
-        //sb.append("(").append(value).append(")");
-
-        for(int j=0; j<valCopy.length; j++) {
-            for (int i = 0; i < 4; i++) {
-                sb.insert(0, String.format("%02x ", valCopy[j] & 0xFF));
-                valCopy[j] = valCopy[j] >> 8;
-            }
-            sb.insert(0, ", ");
-        }
-
-        return sb.toString();
     }
 }

@@ -26,6 +26,15 @@ import static org.junit.Assert.*;
 
 /**
  * Tests relating to API access of the TiffFileHandler entity.
+ *
+ * Tests for:
+ *  1) Loading of single-strip RGB data into TIFF object
+ *  2) Reading correct RGB offset and data length from single-strip RGB data
+ *  3) Reading correct RGB offset and data length from multi-strip RGB data
+ *  4) Reading correct RGB offset and data length from non-sequential multi-strip RGB data
+ *
+ *  Todo tests:
+ *  5)
  */
 public class TiffFileHandlerTest {
 
@@ -34,7 +43,7 @@ public class TiffFileHandlerTest {
     private static String nonSeqSplitTiff = "/non_sequential_rgbstrips_split_data.tiff";
 
     /**
-     * Tests that a TIFF with a single strip of RGB data can be read into a TIFF object.
+     * 1: Tests that a TIFF with a single strip of RGB data can be read into a TIFF object.
      */
     @Test
     public void loadFile() {
@@ -53,8 +62,8 @@ public class TiffFileHandlerTest {
     }
 
     /**
-     * Tests that the RGB offset and data length can be read from a TIFF objected
-     * created from a TIFF containing a single Strip of RGB data.
+     * 2: Tests that the RGB offset and data length can be read from a TIFF objected
+     *    created from a TIFF containing a single Strip of RGB data.
      */
     @Test
     public void getRGBOffsetAndLength(){
@@ -71,8 +80,8 @@ public class TiffFileHandlerTest {
     }
 
     /**
-     * Tests that the RGB offsets and data lengths can be read from a TIFF
-     * file with two Strips of RGB data.
+     * 3: Tests that the RGB offsets and data lengths can be read from a TIFF
+     *    file with two Strips of RGB data.
      */
     @Test
     public void loadSplitRGBFile() {
@@ -94,10 +103,10 @@ public class TiffFileHandlerTest {
     }
 
     /**
-     * Tests that the RGB offsets and data lengths can be read from a TIFF
-     * file containing two Strips of RGB data not in sequential order (i.e.
-     * bytes for the second half of RGB data occur before bytes for the
-     * first half of RGB data.
+     * 4: Tests that the RGB offsets and data lengths can be read from a TIFF
+     *    file containing two Strips of RGB data not in sequential order (i.e.
+     *    bytes for the second half of RGB data occur before bytes for the
+     *    first half of RGB data.
      */
     @Test
     public void loadNonSeqSplitRGBFile() {

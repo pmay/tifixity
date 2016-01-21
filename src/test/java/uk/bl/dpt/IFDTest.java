@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  *  3) Correct StripOffset for data split across 2 IFDs
  *
  * Todo tests:
- *  4) numerically ordered Directory entries in IFD
+ *  4)
  */
 public class IFDTest {
 

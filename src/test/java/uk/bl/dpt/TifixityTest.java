@@ -26,8 +26,15 @@ import static org.junit.Assert.*;
 
 /**
  * Tests relating to the checksumming functionality provided by Tifixity
+ *
+ * Tests for:
+ *  1) File and Image MD5 checks for single strip TIFF
+ *  2) Image MD5 check for sequential 2-strip TIFF with strips referenced in sequential order
+ *  3) Image MD5 check for sequential 2-strip TIFF with strips referenced in reverse order
+ *  4) Image MD5 check for non-sequential 2-strip TIFF with strips referenced in sequential order
+ *  5) Image MD5 check for non-sequential 2-strip TIFF with strips referenced in reverse order
  */
-public class ChecksumTest {
+public class TifixityTest {
 
     // 1: TIFF containing single Strip of RGB data
     private static String singleStrip               = "/T_one_strip.tiff";
@@ -42,7 +49,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = Tifixity.checksum(f.getPath());
+            String jtifcs = Tifixity.checksumFile(f.getPath());
             assertEquals(singleStrip_CS, jtifcs);
         } catch (Exception e){
             e.printStackTrace();
@@ -57,7 +64,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            String rgbcs = Tifixity.checksumImage(f.getPath(), 0);
             assertEquals(singleStrip_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
@@ -81,7 +88,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(twoStrips_seq_normal);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = Tifixity.checksumPayload(f.getPath());
+            String jtifcs = Tifixity.checksumImage(f.getPath(), 0);
             assertEquals(singleStrip_CS_RGB, jtifcs);
         } catch (Exception e){
             e.printStackTrace();
@@ -105,7 +112,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(twoStrips_seq_reverse);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            String rgbcs = Tifixity.checksumImage(f.getPath(), 0);
             assertEquals(twoStrips_seq_reverse_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
@@ -129,7 +136,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(twoStrips_nonseq_normal);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            String rgbcs = Tifixity.checksumImage(f.getPath(), 0);
             assertEquals(twoStrips_nonseq_normal_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();
@@ -154,7 +161,7 @@ public class ChecksumTest {
         try {
             URL url = getClass().getResource(twoStrips_nonseq_reverse);
             File f = Paths.get(url.toURI()).toFile();
-            String rgbcs = Tifixity.checksumPayload(f.getPath());
+            String rgbcs = Tifixity.checksumImage(f.getPath(), 0);
             assertEquals(singleStrip_CS_RGB, rgbcs);
         } catch (Exception e){
             e.printStackTrace();

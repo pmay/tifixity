@@ -33,7 +33,7 @@ public class IFD {
     private long offset = -1;
     private HashMap<IFDTag, Directory> directories = null;
 
-    public IFD(){
+    protected IFD(){
         directories = new HashMap();
     }
 
@@ -126,7 +126,12 @@ public class IFD {
                         buf.append((Character) value[j]);
                         break;
                     default:
-                        buf.append(String.format("%02x ", ((Integer) value[j]) & 0xFF));
+                        buf.append(String.format("%02x", ((Integer) value[j]) & 0xFF));
+                        buf.append(" (").append((Integer) value[j]).append(")");
+
+                        if (j+1<value.length){
+                            buf.append(", ");
+                        }
                 }
             }
 

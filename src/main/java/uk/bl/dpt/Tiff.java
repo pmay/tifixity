@@ -58,6 +58,12 @@ public class Tiff {
         return ifds.size();
     }
 
+    /**
+     * Returns the IFD at the specified index.
+     * @param index
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public IFD getIFD(int index) throws IndexOutOfBoundsException{
         if(index < 0 || index > ifds.size()){
             throw new IndexOutOfBoundsException();
@@ -65,6 +71,10 @@ public class Tiff {
         return ifds.get(index);
     }
 
+    /**
+     * Adds the specified IFD to an ArrayList of IFDs in this TIFF
+     * @param ifd
+     */
     public void addIFD(IFD ifd){
         if(ifds==null){
             ifds = new ArrayList<>();
@@ -74,10 +84,18 @@ public class Tiff {
         }
     }
 
+    /**
+     * Returns the offsets of the RGB data splits for the first subfile (IFD) within this TIFF.
+     * @return  Integer[]   offsets of the RGB data for the first subfile
+     */
     public Integer[] getRGBOffset(){
         return (Integer[]) getIFD(0).getDirectory(IFDTag.StripOffsets).getValue();
     }
 
+    /**
+     * Returns the lengths of the RGB data splits for the first subfile (IFD) within this TIFF.
+     * @return  Integer[]   lengths of the RGB data for the first subfile
+     */
     public Integer[] getRGBLength(){
         return (Integer[]) getIFD(0).getDirectory(IFDTag.StripByteCounts).getValue();
     }

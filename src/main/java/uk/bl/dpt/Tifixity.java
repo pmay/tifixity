@@ -35,13 +35,13 @@ public class Tifixity {
     private static ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
 
     /**
-     * Returns the file and image payload checksums for the specified file.
+     * Returns the full checksum for the specified file.
      * @param file
      * @return
      * @throws NoSuchAlgorithmException
      * @throws IOException
      */
-    public static String checksum(String file) throws NoSuchAlgorithmException, IOException{
+    public static String checksumFile(String file) throws NoSuchAlgorithmException, IOException{
         MessageDigest md = MessageDigest.getInstance("MD5");
         MessageDigest partialmd = MessageDigest.getInstance("MD5");
 
@@ -70,13 +70,14 @@ public class Tifixity {
     private static int BUFFERSIZE = 100;
 
     /**
-     * Checksums the image payload of the specified file.
-     * @param file
+     * Returns the image payload checksumFile of the specified file's subfile.
+     * @param file      the TIFF file to checksumFile
+     * @param subfile   the subfile index (0 indexed)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    public static String checksumPayload(String file) throws IOException, NoSuchAlgorithmException {
+    public static String checksumImage(String file, int subfile) throws IOException, NoSuchAlgorithmException {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(file);
         Integer[] rgbIndexes = tiff.getRGBOffset();
         Integer[] rgbLengths = tiff.getRGBLength();
@@ -129,7 +130,7 @@ public class Tifixity {
      */
     public static void main(String[] args){
         try {
-            String hash = checksumPayload(args[0]);
+            String hash = checksumImage(args[0], 0);
             System.out.println(hash);
         } catch (Exception e){
             e.printStackTrace();
