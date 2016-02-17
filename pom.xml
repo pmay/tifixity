@@ -6,13 +6,14 @@
 
     <groupId>uk.bl.dpt</groupId>
     <artifactId>tifixity</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
 
     <name>Tifixity</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mvn.compiler.version>3.0</mvn.compiler.version>
+        <mvn.jar.version>2.4</mvn.jar.version>
         <java.version>1.8</java.version>
     </properties>
 
@@ -35,6 +36,18 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${mvn.jar.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>uk.bl.dpt.Tifixity</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
