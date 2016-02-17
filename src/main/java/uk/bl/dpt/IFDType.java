@@ -19,7 +19,7 @@ package uk.bl.dpt;
 import java.util.HashMap;
 
 /**
- * Enumeration of TIFF v6 IFD Directory Types
+ * Enumeration of TIFF v6 IFD DirectoryEntry Types
  */
 public enum IFDType {
     BYTE ((short) 1),

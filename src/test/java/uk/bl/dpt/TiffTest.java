@@ -32,6 +32,7 @@ import static org.junit.Assert.*;
  *      via convenience methods
  *   4) creating a TIFF with two RGB strips and retrieval of RGB strip data (StripOffsets, StripByteCounts)
  *      via convenience methods
+ *   5) retrieving the compression of a single image TIFF file
  *
  * Todo tests:
  *   5)
@@ -56,20 +57,20 @@ public class TiffTest {
     public void nonSplitRGBTiff(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectory(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        ifd.addDirectory(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
         tiff.addIFD(ifd);
 
         assertEquals(1, tiff.numberOfIfds());
-        assertEquals(2, tiff.getIFD(0).numberOfDirectories());
+        assertEquals(2, tiff.getIFD(0).numberOfDirectoryEntries());
 
-        IFD.Directory<Integer> directory = tiff.getIFD(0).getDirectory(IFDTag.StripOffsets);
-        assertArrayEquals(new Integer[]{8}, directory.getValue());
-        assertEquals(new Integer(8), directory.getValue()[0]);
+        IFD.DirectoryEntry<Integer> directoryEntry = tiff.getIFD(0).getDirectoryEntry(IFDTag.StripOffsets);
+        assertArrayEquals(new Integer[]{8}, directoryEntry.getValue());
+        assertEquals(new Integer(8), directoryEntry.getValue()[0]);
 
-        directory = tiff.getIFD(0).getDirectory(IFDTag.StripByteCounts);
-        assertArrayEquals(new Integer[]{300}, directory.getValue());
-        assertEquals(new Integer(300), directory.getValue()[0]);
+        directoryEntry = tiff.getIFD(0).getDirectoryEntry(IFDTag.StripByteCounts);
+        assertArrayEquals(new Integer[]{300}, directoryEntry.getValue());
+        assertEquals(new Integer(300), directoryEntry.getValue()[0]);
     }
 
     /**
@@ -80,8 +81,8 @@ public class TiffTest {
     public void nonSplitRGBConvenienceMethod(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectory(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        ifd.addDirectory(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
         tiff.addIFD(ifd);
 
         Integer[] rgbOffsets = tiff.getRGBOffset();
@@ -99,8 +100,8 @@ public class TiffTest {
     public void twoSplitRGBConvenienceMethod(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectory(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
-        ifd.addDirectory(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{150, 150});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{150, 150});
         tiff.addIFD(ifd);
 
         Integer[] rgbOffsets = tiff.getRGBOffset();
@@ -110,4 +111,18 @@ public class TiffTest {
         assertArrayEquals(new Integer[]{150, 150}, rgbLengths);
     }
 
+    /**
+     * 5: Tests that the compression of a single image TIFF can be retrieved.
+     */
+    @Test
+    public void singleImageNoCompressionRetrieval(){
+        Tiff tiff = new Tiff();
+        IFD ifd = new IFD();
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.Compression, IFDType.SHORT, 1, new Integer[]{1});
+        tiff.addIFD(ifd);
+
+        assertEquals((Integer) 1, (Integer) tiff.getCompression(0));
+    }
 }

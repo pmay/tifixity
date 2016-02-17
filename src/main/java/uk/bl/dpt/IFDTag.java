@@ -19,7 +19,7 @@ package uk.bl.dpt;
 import java.util.HashMap;
 
 /**
- * Enumeration of TIFF v6 IFD Directory Tags
+ * Enumeration of TIFF v6 IFD DirectoryEntry Tags
  */
 public enum IFDTag {
     NewSubfileType (254),
@@ -33,7 +33,7 @@ public enum IFDTag {
     CellWidth (264),
     CellLength (265),
     FillOrder (266),
-    DocumentName (269),                 // TIFF 6.0 Section 12
+    DocumentName (269),                 // ext; TIFF 6.0 Section 12
     ImageDescription (270),
     Make (271),
     Model (272),
@@ -47,38 +47,57 @@ public enum IFDTag {
     XResolution (282),
     YResolution (283),
     PlanarConfiguration (284),
+    PageName (285),                     // ext
     FreeOffsets (288),
     FreeByteCounts (289),
     GrayResponseUnit (290),
     GrayResponseCurve (291),
     ResolutionUnit (296),
+    PageNumber (297),                   // ext
     Software (305),
     DateTime (306),
     Artist (315),
     HostComputer (316),
+    Predictor (317),                    // ext; TIFF 6.0 Section 14
+    WhitePoint (318),                   // ext; TIFF 6.0 Section 20
+    PrimaryChromaticities (319),        // ext; TIFF 6.0 Section 20
     ColorMap (320),
     ExtraSamples (338),
-    Copyright (33432);
+    Copyright (33432),
+    UNKNOWN (-1);
 
     private static HashMap<Integer, IFDTag> lookup;
     private final Integer value;
 
-    IFDTag(Integer value){
+    IFDTag (Integer value){
         this.value = value;
     }
 
     static {
-        lookup = new HashMap<Integer, IFDTag>();
+        lookup = new HashMap<>();
         for(IFDTag t: IFDTag.values()){
-            lookup.put(t.getTypeValue(), t);
+            lookup.put(t.getTagValue(), t);
         }
     }
 
+    /**
+     * Returns the IFDTag associated with the specified value or UNKNOWN if not found.
+     * @param value
+     * @return
+     */
     public static IFDTag getTag(Integer value){
-        return lookup.get(value);
+        IFDTag tag = lookup.get(value);
+        if(tag==null){
+            tag = IFDTag.UNKNOWN;
+        }
+        return tag;
     }
 
-    public Integer getTypeValue(){
+    /**
+     * Returns the value associated with this IFDTag object.
+     * @return
+     */
+    public Integer getTagValue(){
         return this.value;
     }
 }

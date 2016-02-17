@@ -16,6 +16,8 @@
  */
 package uk.bl.dpt;
 
+import uk.bl.dpt.types.Rational;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -80,7 +82,7 @@ public class TiffFileHandler {
         short dircount = buf.order(tiff.getByteOrder()).getShort();
         System.out.println("Dir count: "+dircount);
 
-        // read each Directory
+        // read each DirectoryEntry
         sbc.position(offset+2);
         for(int i=0; i<dircount; i++){
             readDirectory(sbc, tiff.getByteOrder(), ifd);
@@ -108,7 +110,7 @@ public class TiffFileHandler {
         //  4-7  Count of indicated type
         //  8-11 Value offset
         int tagval = buf.order(byteOrder).getShort();
-        IFDTag tag = IFDTag.getTag(tagval);
+        //IFDTag tag = IFDTag.getTag(tagval);
 
         short typeval = buf.order(byteOrder).getShort();
         IFDType type = IFDType.getType(typeval);
@@ -120,15 +122,19 @@ public class TiffFileHandler {
 
         long curPosition = sbc.position();
 
-        if (count>1) {
+        if (count>1 || type==IFDType.RATIONAL || type==IFDType.SRATIONAL) {
             // value is a pointer
             Object[] values;
             switch(type){
+                case BYTE:
                 case ASCII:
                     values = readArrayChar(sbc.position(value[0]), byteOrder, count);
                     break;
                 case SHORT:
                     values = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
+                    break;
+                case RATIONAL:
+                    values = readArrayRational(sbc.position(value[0]), byteOrder, type, count);
                     break;
                 case LONG:
                 default:
@@ -136,16 +142,13 @@ public class TiffFileHandler {
                     break;
             }
             // add directory to IFD object
-            ifd.addDirectory(tag, type, count, values);
-
-            //System.out.println("Tag: "+tag+" ("+tagval+")\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: ");//+printHexIntArray(values));
+            ifd.addDirectoryEntry(tagval, type, count, values);
         } else {
             // add directory to IFD object
-            ifd.addDirectory(tag, type, count, value);
-            //System.out.println("Tag: "+tag+" ("+tagval+")\tType: "+type+" ("+typeval+")\tCount: "+count+"\tValue: "+printHexIntArray(value));
+            ifd.addDirectoryEntry(tagval, type, count, value);
         }
 
-        System.out.println(ifd.getDirectory(tag).toString());
+        System.out.println(ifd.getDirectoryEntry(tagval).toString());
 
         // reset position in channel
         sbc.position(curPosition);
@@ -214,6 +217,29 @@ public class TiffFileHandler {
 
         for(int i=0; i<length; i++){
             values[i] = buf.order(byteOrder).getInt();
+        }
+
+        return values;
+    }
+
+    /**
+     *
+     * @param sbc
+     * @param byteOrder
+     * @param type
+     * @param length
+     * @return
+     * @throws IOException
+     */
+    private static Rational[] readArrayRational(SeekableByteChannel sbc, ByteOrder byteOrder, IFDType type, int length) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(length*8); //Rational = 2*Long
+        sbc.read(buf);
+        buf.rewind();
+
+        Rational[] values = new Rational[length];
+
+        for(int i=0; i<length; i++){
+            values[i] = new Rational(buf.order(byteOrder).getInt(), buf.order(byteOrder).getInt());
         }
 
         return values;

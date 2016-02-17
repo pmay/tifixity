@@ -55,7 +55,7 @@ public class TiffFileHandlerTest {
             assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
             IFD ifd = tiff.getIFD(0);
             assertEquals(308L, ifd.getOffset());            // offset: 308
-            assertEquals(17, ifd.numberOfDirectories());    // 17 directories
+            assertEquals(17, ifd.numberOfDirectoryEntries());    // 17 directories
         } catch (Exception e){
             e.printStackTrace();
         }

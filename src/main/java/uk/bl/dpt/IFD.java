@@ -16,13 +16,15 @@
  */
 package uk.bl.dpt;
 
+import uk.bl.dpt.types.Rational;
+
 import java.util.HashMap;
 
 /**
  * Class representing a TIFF IFD.
  *
  * TIFF v6, pg 14:
- * An Image File Directory (IFD) consists of a 2-byte count of the number of directory
+ * An Image File DirectoryEntry (IFD) consists of a 2-byte count of the number of directory
  * entries (i.e., the number of fields), followed by a sequence of 12-byte field
  * entries, followed by a 4-byte offset of the next IFD (or 0 if none). (Do not forget to
  * write the 4 bytes of 0 after the last IFD.)
@@ -31,10 +33,11 @@ import java.util.HashMap;
  */
 public class IFD {
     private long offset = -1;
-    private HashMap<IFDTag, Directory> directories = null;
+    // Has to be Integer index (rather than IFDTag) to enable private tags to be captured
+    private HashMap<Integer, DirectoryEntry> directory = null;
 
     protected IFD(){
-        directories = new HashMap();
+        directory = new HashMap();
     }
 
     public IFD(long offset){
@@ -50,26 +53,51 @@ public class IFD {
         this.offset = offset;
     }
 
-    public void addDirectory(IFDTag tag, IFDType type, int count, Object[] value) {
+    /**
+     * Adds the specified IFDTag to the Directory.
+     * @param tag
+     * @param type
+     * @param count
+     * @param value
+     */
+    public void addDirectoryEntry(IFDTag tag, IFDType type, int count, Object[] value) {
+        this.addDirectoryEntry(tag.getTagValue(), type, count, value);
+    }
+
+    /**
+     * Adds the IFDTag specified by tagValue to the Directory.
+     * @param tagValue
+     * @param type
+     * @param count
+     * @param value
+     */
+    public void addDirectoryEntry(Integer tagValue, IFDType type, int count, Object[] value) {
         switch(type){
             case ASCII:
-                directories.put(tag, new Directory<Character>(tag, type, count, (Character[]) value));
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Character[]) value));
+                break;
+            case RATIONAL:
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Rational[]) value));
                 break;
             default:
-                directories.put(tag, new Directory<Integer>(tag, type, count, (Integer[]) value));
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Integer[]) value));
         }
     }
 
-    public int numberOfDirectories(){
-        return directories.size();
+    public int numberOfDirectoryEntries(){
+        return directory.size();
     }
 
 //    public int getTagValue(IFDTag tag){
 //        return directories.get(tag).value[0];
 //    }
 
-    public Directory getDirectory(IFDTag tag){
-        return directories.get(tag);
+    public DirectoryEntry getDirectoryEntry(IFDTag tag){
+        return this.getDirectoryEntry(tag.getTagValue());
+    }
+
+    public DirectoryEntry getDirectoryEntry(Integer tagValue){
+        return directory.get(tagValue);
     }
 
     /**
@@ -86,21 +114,23 @@ public class IFD {
      *                point anywhere in the file, even after the image data.
      * @param <T>
      */
-    public class Directory<T> {
+    public class DirectoryEntry<T> {
         private IFDTag  tag;
+        private Integer tagValue;
         private IFDType type;
         private int     count;
         private T[]     value;
 
         /**
-         * Construct a new Directory entry
-         * @param tag
+         * Construct a new DirectoryEntry entry
+         * @param tagValue
          * @param type
          * @param count
          * @param value
          */
-        public Directory(IFDTag tag, IFDType type, int count, T[] value){
-            this.tag = tag;
+        public DirectoryEntry(Integer tagValue, IFDType type, int count, T[] value){
+            this.tag = IFDTag.getTag(tagValue);
+            this.tagValue = tagValue;
             this.type = type;
             this.count = count;
             this.value = value;
@@ -115,7 +145,8 @@ public class IFD {
         }
 
         public String toString(){
-            StringBuffer buf = new StringBuffer("Tag: ").append(tag).append(" (").append(tag.getTypeValue()).append(")");
+            StringBuffer buf = new StringBuffer("Tag: ").append(tag);
+            buf.append(" (").append(tagValue).append(")");
             buf.append("\tType: ").append(type).append(" (").append(type.getTypeValue()).append(")");
             buf.append("\tCount: ").append(count);
             buf.append("\tValue: ");
@@ -124,6 +155,17 @@ public class IFD {
                 switch(type) {
                     case ASCII:
                         buf.append((Character) value[j]);
+                        break;
+                    case RATIONAL:
+                        buf.append(String.format("%02x", (((Rational) value[j]).getNumerator() & 0xFF)));
+                        buf.append("/");
+                        buf.append(String.format("%02x", (((Rational) value[j]).getDenominator() & 0xFF)));
+                        buf.append(" (").append((((Rational) value[j]).getNumerator() & 0xFF));
+                        buf.append("/").append((((Rational) value[j]).getDenominator() & 0xFF)).append(")");
+
+                        if (j+1<value.length){
+                            buf.append(", ");
+                        }
                         break;
                     default:
                         buf.append(String.format("%02x", ((Integer) value[j]) & 0xFF));

@@ -18,7 +18,6 @@ package uk.bl.dpt;
 
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Class representing a TIFF file.
@@ -89,7 +88,7 @@ public class Tiff {
      * @return  Integer[]   offsets of the RGB data for the first subfile
      */
     public Integer[] getRGBOffset(){
-        return (Integer[]) getIFD(0).getDirectory(IFDTag.StripOffsets).getValue();
+        return (Integer[]) getIFD(0).getDirectoryEntry(IFDTag.StripOffsets).getValue();
     }
 
     /**
@@ -97,7 +96,17 @@ public class Tiff {
      * @return  Integer[]   lengths of the RGB data for the first subfile
      */
     public Integer[] getRGBLength(){
-        return (Integer[]) getIFD(0).getDirectory(IFDTag.StripByteCounts).getValue();
+        return (Integer[]) getIFD(0).getDirectoryEntry(IFDTag.StripByteCounts).getValue();
+    }
+
+
+    /**
+     * Returns the compression value associated for the specified subfile within this TIFF
+     * @param subfile
+     * @return
+     */
+    public Integer getCompression(int subfile){
+        return (Integer) getIFD(0).getDirectoryEntry(IFDTag.Compression).getValue()[0];
     }
 
     @Override
@@ -126,7 +135,7 @@ public class Tiff {
             if(orig.getOffset()!=cmp.getOffset()){
                 return false;
             }
-            if(orig.numberOfDirectories()!=cmp.numberOfDirectories()){
+            if(orig.numberOfDirectoryEntries()!=cmp.numberOfDirectoryEntries()){
                 return false;
             }
         }

@@ -40,7 +40,7 @@ public class IFDTest {
     @Test
     public void emptyIFDTest(){
         IFD ifd = new IFD();
-        assertEquals(0, ifd.numberOfDirectories());
+        assertEquals(0, ifd.numberOfDirectoryEntries());
     }
 
     /**
@@ -50,11 +50,11 @@ public class IFDTest {
     @Test
     public void nonSplitStripOffsetTest(){
         IFD ifd = new IFD();
-        ifd.addDirectory(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        assertEquals(1, ifd.numberOfDirectories());
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
+        assertEquals(1, ifd.numberOfDirectoryEntries());
 
-        IFD.Directory<Integer> directory = ifd.getDirectory(IFDTag.StripOffsets);
-        assertArrayEquals(new Integer[]{8}, directory.getValue());
+        IFD.DirectoryEntry<Integer> directoryEntry = ifd.getDirectoryEntry(IFDTag.StripOffsets);
+        assertArrayEquals(new Integer[]{8}, directoryEntry.getValue());
     }
 
     /**
@@ -64,13 +64,22 @@ public class IFDTest {
     @Test
     public void twoSplitStripOffsetTest(){
         IFD ifd = new IFD();
-        ifd.addDirectory(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
-        assertEquals(1, ifd.numberOfDirectories());
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
+        assertEquals(1, ifd.numberOfDirectoryEntries());
 
-        IFD.Directory<Integer> directory = ifd.getDirectory(IFDTag.StripOffsets);
-        assertEquals(2, directory.getCount());
-        assertArrayEquals(new Integer[]{8, 0x1e8}, directory.getValue());
-        assertEquals(new Integer(8), directory.getValue()[0]);
-        assertEquals(new Integer(0x1e8), directory.getValue()[1]);
+        IFD.DirectoryEntry<Integer> directoryEntry = ifd.getDirectoryEntry(IFDTag.StripOffsets);
+        assertEquals(2, directoryEntry.getCount());
+        assertArrayEquals(new Integer[]{8, 0x1e8}, directoryEntry.getValue());
+        assertEquals(new Integer(8), directoryEntry.getValue()[0]);
+        assertEquals(new Integer(0x1e8), directoryEntry.getValue()[1]);
+    }
+
+    /**
+     * 4: Tests handling of unknown IFD tags
+     */
+    @Test
+    public void extensionTag(){
+        IFDTag tag = IFDTag.getTag(65000);
+        assertEquals(IFDTag.UNKNOWN, tag);
     }
 }
