@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -36,10 +38,10 @@ public class TiffFileHandler {
      * @return
      * @throws IOException
      */
-    public static Tiff loadTiffFromFile(String file) throws IOException {
+    public static Tiff loadTiffFromFile(Path file) throws IOException {
         Tiff tiff = new Tiff(ByteOrder.LITTLE_ENDIAN);
 
-        try (SeekableByteChannel sbc = Files.newByteChannel(Paths.get(file))) {
+        try (SeekableByteChannel sbc = Files.newByteChannel(file)) {//Paths.get(file))) {
             ByteBuffer buf = ByteBuffer.allocate(8);
 
             // read TIFF header
@@ -54,13 +56,12 @@ public class TiffFileHandler {
             // read IFD offset
             buf.position(4);
             int ifdoffset = buf.order(tiff.getByteOrder()).getInt();
-            System.out.println("IFD Offset: "+ifdoffset);
+            if(Tifixity.verbose) System.out.println("IFD Offset: "+ifdoffset);
 
             // read the IFD starting at the specified offset and add to the specified tiff
             readIFD(sbc, ifdoffset, tiff);
-
-            return tiff;
         }
+        return tiff;
     }
 
     /**
@@ -80,7 +81,7 @@ public class TiffFileHandler {
         buf.rewind();
         // 2 byte count + 12 bytes per directory
         short dircount = buf.order(tiff.getByteOrder()).getShort();
-        System.out.println("Dir count: "+dircount);
+        if(Tifixity.verbose) System.out.println("Dir count: "+dircount);
 
         // read each DirectoryEntry
         sbc.position(offset+2);
@@ -122,6 +123,7 @@ public class TiffFileHandler {
 
         long curPosition = sbc.position();
 
+        // add directory to IFD object
         if (count>1 || type==IFDType.RATIONAL || type==IFDType.SRATIONAL) {
             // value is a pointer
             Object[] values;
@@ -144,11 +146,10 @@ public class TiffFileHandler {
             // add directory to IFD object
             ifd.addDirectoryEntry(tagval, type, count, values);
         } else {
-            // add directory to IFD object
             ifd.addDirectoryEntry(tagval, type, count, value);
         }
 
-        System.out.println(ifd.getDirectoryEntry(tagval).toString());
+        if(Tifixity.verbose) System.out.println(ifd.getDirectoryEntry(tagval).toString());
 
         // reset position in channel
         sbc.position(curPosition);

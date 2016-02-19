@@ -49,8 +49,7 @@ public class TiffFileHandlerTest {
     public void loadFile() {
         try {
             URL url = getClass().getResource(testTiff);
-            File f = Paths.get(url.toURI()).toFile();
-            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
             assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
             IFD ifd = tiff.getIFD(0);
@@ -69,8 +68,7 @@ public class TiffFileHandlerTest {
     public void getRGBOffsetAndLength(){
         try{
             URL url = getClass().getResource(testTiff);
-            File f = Paths.get(url.toURI()).toFile();
-            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
             assertArrayEquals(new Integer[]{8}, tiff.getRGBOffset());          // RGB data starts at byte 8
             assertArrayEquals(new Integer[]{300}, tiff.getRGBLength());        // RGB data is 300 bytes
@@ -87,8 +85,7 @@ public class TiffFileHandlerTest {
     public void loadSplitRGBFile() {
         try {
             URL url = getClass().getResource(splitTestTiff);
-            File f = Paths.get(url.toURI()).toFile();
-            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
             assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
 
@@ -112,8 +109,7 @@ public class TiffFileHandlerTest {
     public void loadNonSeqSplitRGBFile() {
         try {
             URL url = getClass().getResource(nonSeqSplitTiff);
-            File f = Paths.get(url.toURI()).toFile();
-            Tiff tiff = TiffFileHandler.loadTiffFromFile(f.getPath());
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
             assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
 

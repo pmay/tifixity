@@ -16,11 +16,16 @@
  */
 package uk.bl.dpt;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.nio.file.NoSuchFileException;
+import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.*;
 
@@ -28,6 +33,7 @@ import static org.junit.Assert.*;
  * Tests relating to the checksumming functionality provided by Tifixity
  *
  * Tests for:
+ *  0) Invalid file name
  *  1) File and Image MD5 checks for single strip TIFF
  *  2) Image MD5 check for sequential 2-strip TIFF with strips referenced in sequential order
  *  3) Image MD5 check for sequential 2-strip TIFF with strips referenced in reverse order
@@ -35,6 +41,16 @@ import static org.junit.Assert.*;
  *  5) Image MD5 check for non-sequential 2-strip TIFF with strips referenced in reverse order
  */
 public class TifixityTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    // 0: Incorrect file name
+    @Test
+    public void incorrectFilePath() throws IOException, NoSuchAlgorithmException {
+        thrown.expect(NoSuchFileException.class);
+        Tifixity.checksumImage("/missingfile.tiff", 0);
+    }
 
     // 1: TIFF containing single Strip of RGB data
     private static String singleStrip               = "/T_one_strip.tiff";

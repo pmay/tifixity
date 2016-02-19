@@ -16,12 +16,16 @@
  */
 package uk.bl.dpt;
 
+import org.apache.commons.cli.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -31,6 +35,8 @@ import java.security.NoSuchAlgorithmException;
  * Main application and Tifixity API.
  */
 public class Tifixity {
+
+    public static boolean verbose = false;  // Verbose output required
 
     private static ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
 
@@ -78,7 +84,8 @@ public class Tifixity {
      * @throws NoSuchAlgorithmException
      */
     public static String checksumImage(String file, int subfile) throws IOException, NoSuchAlgorithmException {
-        Tiff tiff = TiffFileHandler.loadTiffFromFile(file);
+        Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
+
         Integer[] rgbIndexes = tiff.getRGBOffset();
         Integer[] rgbLengths = tiff.getRGBLength();
 
@@ -128,12 +135,32 @@ public class Tifixity {
      * Main application that checksums the image payload of the supplied TIFF file.
      * @param args
      */
-    public static void main(String[] args){
-        try {
-            String hash = checksumImage(args[0], 0);
-            System.out.println(hash);
-        } catch (Exception e){
-            e.printStackTrace();
+    public static void main(String[] args) throws ParseException{
+        // Define options
+        Options options = new Options();
+        options.addOption("v", "verbose", false, "Display verbose output");
+
+        // Parse the command line arguments
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        // Process arguments
+        if (cmd.hasOption("v")){
+            verbose=true;
+        }
+
+        // Remaining arguments should be filenames
+        String[] files = cmd.getArgs();
+        for(int i=0; i<files.length; i++){
+            try {
+                String hash = checksumImage(files[i], 0);
+                System.out.println(hash);
+            } catch (NoSuchFileException nsfe){
+                System.err.println("No such file: "+files[i]);
+                System.exit(-1);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 }
