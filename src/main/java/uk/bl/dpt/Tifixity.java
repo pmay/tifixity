@@ -21,7 +21,6 @@ import org.apache.commons.cli.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -29,15 +28,15 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
 
 /**
  * Main application and Tifixity API.
  */
 public class Tifixity {
 
-    public static boolean verbose = false;  // Verbose output required
-
-    private static ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+    protected static boolean verbose = false;                   // Verbose output required
+    private static Properties properties = new Properties();    // Default properties. Contain details from POM.
 
     /**
      * Returns the full checksum for the specified file.
@@ -129,15 +128,38 @@ public class Tifixity {
         return digest.toString();
     }
 
+    /**
+     * Prints the Help menu
+     * @param options
+     */
+    private static void printHelp(Options options){
+        String usage  = "java -jar "+properties.getProperty("project.jar")+" <tiff>";
+        String header = "Calculate the MD5 checksum of the image portion of the specified TIFF file\n\n";
+        String footer = "\nPlease report issues at https://github.com/pmay/tifixity/issues";
+
+        HelpFormatter helpformatter = new HelpFormatter();
+        helpformatter.printHelp(usage, header, options, footer, true);
+    }
+
 
     /**
      * Main application that checksums the image payload of the supplied TIFF file.
      * @param args
      */
     public static void main(String[] args) throws ParseException{
+        // Load Properties file containing references to version/filenames
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        try (InputStream in = classloader.getResourceAsStream(".properties")){
+            properties.load(in);
+        } catch (IOException ioe){
+            System.err.println("Problem reading properties: "+ioe);
+        }
+
         // Define options
         Options options = new Options();
-        options.addOption("v", "verbose", false, "Display verbose output");
+        options.addOption("h", "help", false, "Print this message");
+        options.addOption("v", "verbose", false, "Print verbose output");
+        options.addOption("version", "Print version");
 
         // Parse the command line arguments
         CommandLineParser parser = new DefaultParser();
@@ -148,8 +170,22 @@ public class Tifixity {
             verbose=true;
         }
 
+        if (cmd.hasOption("h")){
+            printHelp(options);
+            System.exit(0);
+        }
+
+        if (cmd.hasOption("version")){
+            System.out.println("version: "+properties.getProperty("project.version"));
+            System.exit(0);
+        }
+
         // Remaining arguments should be filenames
         String[] files = cmd.getArgs();
+        if (files.length==0) {
+            printHelp(options);
+        }
+
         for(int i=0; i<files.length; i++){
             try {
                 String hash = checksumImage(files[i], 0);
