@@ -18,7 +18,6 @@ package uk.bl.dpt;
 
 import org.junit.Test;
 
-import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
 
@@ -51,7 +50,7 @@ public class TiffFileHandlerTest {
             URL url = getClass().getResource(testTiff);
             Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
-            assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
+            assertEquals(1, tiff.numberOfIFDs());           // Only 1 IFD
             IFD ifd = tiff.getIFD(0);
             assertEquals(308L, ifd.getOffset());            // offset: 308
             assertEquals(17, ifd.numberOfDirectoryEntries());    // 17 directories
@@ -70,8 +69,8 @@ public class TiffFileHandlerTest {
             URL url = getClass().getResource(testTiff);
             Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
-            assertArrayEquals(new Integer[]{8}, tiff.getRGBOffset());          // RGB data starts at byte 8
-            assertArrayEquals(new Integer[]{300}, tiff.getRGBLength());        // RGB data is 300 bytes
+            assertArrayEquals(new Integer[]{8}, tiff.getImageDataOffsets(0));          // RGB data starts at byte 8
+            assertArrayEquals(new Integer[]{300}, tiff.getImageDataLengths(0));        // RGB data is 300 bytes
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -87,12 +86,12 @@ public class TiffFileHandlerTest {
             URL url = getClass().getResource(splitTestTiff);
             Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
-            assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
+            assertEquals(1, tiff.numberOfIFDs());           // Only 1 IFD
 
-            Integer[] rgbOffsets = tiff.getRGBOffset();
+            Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
             assertArrayEquals(new Integer[]{8, 0x1e8}, rgbOffsets);
 
-            Integer[] rgbLength = tiff.getRGBLength();
+            Integer[] rgbLength = tiff.getImageDataLengths(0);
             assertArrayEquals(new Integer[]{150, 150}, rgbLength);
         } catch (Exception e){
             e.printStackTrace();
@@ -111,12 +110,12 @@ public class TiffFileHandlerTest {
             URL url = getClass().getResource(nonSeqSplitTiff);
             Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
 
-            assertEquals(1, tiff.numberOfIfds());           // Only 1 IFD
+            assertEquals(1, tiff.numberOfIFDs());           // Only 1 IFD
 
-            Integer[] rgbOffsets = tiff.getRGBOffset();
+            Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
             assertArrayEquals(new Integer[]{0x1e8, 8}, rgbOffsets);
 
-            Integer[] rgbLength = tiff.getRGBLength();
+            Integer[] rgbLength = tiff.getImageDataLengths(0);
             assertArrayEquals(new Integer[]{150, 150}, rgbLength);
         } catch (Exception e){
             e.printStackTrace();

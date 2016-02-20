@@ -45,15 +45,27 @@ public class Tiff {
         this.byteOrder = byteOrder;
     }
 
+    /**
+     * Sets the byte order of this TIFF file
+     * @param byteOrder
+     */
     public void setByteOrder(ByteOrder byteOrder){
         this.byteOrder = byteOrder;
     }
 
+    /**
+     * Returns the byte order of this TIFF file
+     * @return
+     */
     public ByteOrder getByteOrder(){
         return this.byteOrder;
     }
 
-    public int numberOfIfds(){
+    /**
+     * Returns the number of IFDs in this TIFF file
+     * @return
+     */
+    public int numberOfIFDs(){
         return ifds.size();
     }
 
@@ -85,18 +97,20 @@ public class Tiff {
 
     /**
      * Returns the offsets of the RGB data splits for the first subfile (IFD) within this TIFF.
+     * @param subFile       the subfile index (IFD) to get the RGB offset from
      * @return  Integer[]   offsets of the RGB data for the first subfile
      */
-    public Integer[] getRGBOffset(){
-        return (Integer[]) getIFD(0).getDirectoryEntry(IFDTag.StripOffsets).getValue();
+    public Integer[] getImageDataOffsets(int subFile) throws IndexOutOfBoundsException {
+        return (Integer[]) getIFD(subFile).getDirectoryEntry(IFDTag.StripOffsets).getValue();
     }
 
     /**
      * Returns the lengths of the RGB data splits for the first subfile (IFD) within this TIFF.
+     * @param subFile       the sub file index (IFD) to get the strip Length from
      * @return  Integer[]   lengths of the RGB data for the first subfile
      */
-    public Integer[] getRGBLength(){
-        return (Integer[]) getIFD(0).getDirectoryEntry(IFDTag.StripByteCounts).getValue();
+    public Integer[] getImageDataLengths(int subFile) throws IndexOutOfBoundsException {
+        return (Integer[]) getIFD(subFile).getDirectoryEntry(IFDTag.StripByteCounts).getValue();
     }
 
 
@@ -125,7 +139,7 @@ public class Tiff {
         if(this.byteOrder!=tiffObj.byteOrder){
             return false;
         }
-        if(this.ifds.size()!=tiffObj.numberOfIfds()){
+        if(this.ifds.size()!=tiffObj.numberOfIFDs()){
             return false;
         }
         IFD orig, cmp;

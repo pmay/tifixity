@@ -25,7 +25,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -86,8 +85,8 @@ public class Tifixity {
     public static String checksumImage(String file, int subfile) throws IOException, NoSuchAlgorithmException {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
 
-        Integer[] rgbIndexes = tiff.getRGBOffset();
-        Integer[] rgbLengths = tiff.getRGBLength();
+        Integer[] rgbIndexes = tiff.getImageDataOffsets(0);
+        Integer[] rgbLengths = tiff.getImageDataLengths(0);
 
         assert(rgbIndexes.length == rgbLengths.length);
 

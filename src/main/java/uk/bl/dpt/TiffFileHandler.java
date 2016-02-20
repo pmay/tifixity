@@ -111,7 +111,6 @@ public class TiffFileHandler {
         //  4-7  Count of indicated type
         //  8-11 Value offset
         int tagval = buf.order(byteOrder).getShort();
-        //IFDTag tag = IFDTag.getTag(tagval);
 
         short typeval = buf.order(byteOrder).getShort();
         IFDType type = IFDType.getType(typeval);

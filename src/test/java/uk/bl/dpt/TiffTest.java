@@ -16,7 +16,9 @@
  */
 package uk.bl.dpt;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.nio.ByteOrder;
 
@@ -33,6 +35,7 @@ import static org.junit.Assert.*;
  *   4) creating a TIFF with two RGB strips and retrieval of RGB strip data (StripOffsets, StripByteCounts)
  *      via convenience methods
  *   5) retrieving the compression of a single image TIFF file
+ *   6) Two subfiles
  *
  * Todo tests:
  *   5)
@@ -46,7 +49,7 @@ public class TiffTest {
     public void emptyTiffTest(){
         Tiff tiff = new Tiff();
         assertEquals(ByteOrder.LITTLE_ENDIAN, tiff.getByteOrder());
-        assertEquals(0, tiff.numberOfIfds());
+        assertEquals(0, tiff.numberOfIFDs());
     }
 
     /**
@@ -61,7 +64,7 @@ public class TiffTest {
         ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
         tiff.addIFD(ifd);
 
-        assertEquals(1, tiff.numberOfIfds());
+        assertEquals(1, tiff.numberOfIFDs());
         assertEquals(2, tiff.getIFD(0).numberOfDirectoryEntries());
 
         IFD.DirectoryEntry<Integer> directoryEntry = tiff.getIFD(0).getDirectoryEntry(IFDTag.StripOffsets);
@@ -85,10 +88,10 @@ public class TiffTest {
         ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
         tiff.addIFD(ifd);
 
-        Integer[] rgbOffsets = tiff.getRGBOffset();
+        Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
         assertArrayEquals(new Integer[]{8}, rgbOffsets);
 
-        Integer[] rgbByteCounts = tiff.getRGBLength();
+        Integer[] rgbByteCounts = tiff.getImageDataLengths(0);
         assertArrayEquals(new Integer[]{300}, rgbByteCounts);
     }
 
@@ -104,10 +107,10 @@ public class TiffTest {
         ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{150, 150});
         tiff.addIFD(ifd);
 
-        Integer[] rgbOffsets = tiff.getRGBOffset();
+        Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
         assertArrayEquals(new Integer[]{8, 0x1e8}, rgbOffsets);
 
-        Integer[] rgbLengths = tiff.getRGBLength();
+        Integer[] rgbLengths = tiff.getImageDataLengths(0);
         assertArrayEquals(new Integer[]{150, 150}, rgbLengths);
     }
 
@@ -124,5 +127,47 @@ public class TiffTest {
         tiff.addIFD(ifd);
 
         assertEquals((Integer) 1, (Integer) tiff.getCompression(0));
+    }
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    /**
+     * 6: TIFF file with two sub files
+     */
+    @Test
+    public void twoSubFiles(){
+        Tiff tiff = new Tiff();
+
+        IFD ifd1 = new IFD();
+        ifd1.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, new Integer[]{8});
+        ifd1.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, new Integer[]{30});
+
+        IFD ifd2 = new IFD();
+        ifd2.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, new Integer[]{16});
+        ifd2.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, new Integer[]{40});
+
+        tiff.addIFD(ifd1);
+        tiff.addIFD(ifd2);
+
+        assertEquals((Integer) 2, (Integer) tiff.numberOfIFDs());
+        assertEquals(ifd1, tiff.getIFD(0));
+        assertEquals(ifd2, tiff.getIFD(1));
+
+        thrown.expect(IndexOutOfBoundsException.class);
+        tiff.getIFD(3);
+
+        // Check Offsets
+        Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
+        assertArrayEquals(new Integer[]{8}, rgbOffsets);
+
+        rgbOffsets = tiff.getImageDataOffsets(1);
+        assertArrayEquals(new Integer[]{16}, rgbOffsets);
+
+        // Check lengths
+        Integer[] rgbLengths = tiff.getImageDataLengths(0);
+        assertArrayEquals(new Integer[]{30}, rgbLengths);
+        rgbLengths = tiff.getImageDataLengths(1);
+        assertArrayEquals(new Integer[]{40}, rgbLengths);
     }
 }
