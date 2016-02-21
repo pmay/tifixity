@@ -9,6 +9,10 @@ for ensuring that the pixel data remains the same before and after some process.
 
 ## Features and roadmap
 
+### Versino 0.2.0
+* Supports multi-image TIFF files
+* More robust CLI
+
 ### Version 0.1.0
 
 * Initial version
