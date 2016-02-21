@@ -39,7 +39,7 @@ public class TiffFileHandler {
      * @throws IOException
      */
     public static Tiff loadTiffFromFile(Path file) throws IOException {
-        Tiff tiff = new Tiff(ByteOrder.LITTLE_ENDIAN);
+        Tiff tiff = new Tiff(file, ByteOrder.LITTLE_ENDIAN);
 
         try (SeekableByteChannel sbc = Files.newByteChannel(file)) {//Paths.get(file))) {
             ByteBuffer buf = ByteBuffer.allocate(8);
@@ -55,11 +55,19 @@ public class TiffFileHandler {
 
             // read IFD offset
             buf.position(4);
-            int ifdoffset = buf.order(tiff.getByteOrder()).getInt();
-            if(Tifixity.verbose) System.out.println("IFD Offset: "+ifdoffset);
+            int ifdoffset = 0;
 
-            // read the IFD starting at the specified offset and add to the specified tiff
-            readIFD(sbc, ifdoffset, tiff);
+            while((ifdoffset=buf.order(tiff.getByteOrder()).getInt())!=0) {
+                if (Tifixity.verbose) System.out.println("IFD Offset: " + ifdoffset);
+
+                // read the IFD starting at the specified offset and add to the specified tiff
+                readIFD(sbc, ifdoffset, tiff);
+
+                // read the next IFD offset. Will be 0 if no more
+                buf.flip();
+                sbc.read(buf);
+                buf.rewind();
+            }
         }
         return tiff;
     }
@@ -88,8 +96,6 @@ public class TiffFileHandler {
         for(int i=0; i<dircount; i++){
             readDirectory(sbc, tiff.getByteOrder(), ifd);
         }
-
-        // Todo: read offset of next IFD and add to TIFF
 
         tiff.addIFD(ifd);
     }

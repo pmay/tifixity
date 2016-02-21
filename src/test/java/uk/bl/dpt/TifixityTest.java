@@ -40,6 +40,8 @@ import static org.junit.Assert.*;
  *  4) Image MD5 check for non-sequential 2-strip TIFF with strips referenced in sequential order
  *  5) Image MD5 check for non-sequential 2-strip TIFF with strips referenced in reverse order
  *  6) Image MD5 check for compressed single strip TIFF
+ *  7) Image MD5 check for single strip bilevel TIFF
+ *  8) Image MD5 check for two subfile single strip TIFF
  */
 public class TifixityTest {
 
@@ -226,5 +228,27 @@ public class TifixityTest {
         }
     }
 
+    // 8: Image MD5 check for two subfile single strip TIFF
+    private static String twoSubfileSingleStrip = "/T_two_subfile_single_strip.tiff";
+    private static String twoSubfileSingleStrip_CS = "";
+    private static String[] twoSubfileSingleStrip_CS_image = new String[]{"1d4808fbbc37c098520c4e927cccf332",
+                                                                          "5702e84a1f688ad20c2fae9a9f18312b"};
 
+    /**
+     * Checks the MD5 of a TIFF containing two subfile images
+     */
+    @Test
+    public void checkTwoSubfileSingleStrip_MD5(){
+        try{
+            URL url = getClass().getResource(twoSubfileSingleStrip);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] jtifcs = Tifixity.checksumImage(f.getPath());
+
+            assertEquals(2, jtifcs.length);
+            assertEquals(twoSubfileSingleStrip_CS_image[0], jtifcs[0]);
+            assertEquals(twoSubfileSingleStrip_CS_image[1], jtifcs[1]);
+        } catch (Exception e) {
+            fail("Exception "+e);
+        }
+    }
 }

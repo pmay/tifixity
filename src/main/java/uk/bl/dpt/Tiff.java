@@ -17,6 +17,7 @@
 package uk.bl.dpt;
 
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 /**
@@ -24,6 +25,7 @@ import java.util.ArrayList;
  */
 public class Tiff {
 
+    private Path        file        = null;
     private ByteOrder   byteOrder   = null;
     ArrayList<IFD>      ifds        = null;
 
@@ -46,6 +48,17 @@ public class Tiff {
     }
 
     /**
+     * Construct a Tiff object for the specified Tiff file path and the
+     * specified byte order representation.
+     * @param file      the {@link java.nio.file.Path} of the Tiff file
+     * @param byteOrder the {@link java.nio.ByteOrder} of the Tiff file
+     */
+    public Tiff(Path file, ByteOrder byteOrder){
+        this(byteOrder);
+        this.file = file;
+    }
+
+    /**
      * Sets the byte order of this TIFF file
      * @param byteOrder
      */
@@ -60,6 +73,15 @@ public class Tiff {
     public ByteOrder getByteOrder(){
         return this.byteOrder;
     }
+
+    /**
+     * Returns the Path for the actual Tiff file
+     * @return
+     */
+    public Path getFilePath(){
+        return this.file;
+    }
+
 
     /**
      * Returns the number of IFDs in this TIFF file

@@ -38,6 +38,8 @@ public class Tifixity {
     protected static boolean verbose = false;                   // Verbose output required
     private static Properties properties = new Properties();    // Default properties. Contain details from POM.
 
+    private static int BUFFERSIZE = 100;
+
     /**
      * Returns the full checksum for the specified file.
      * @param file
@@ -71,45 +73,80 @@ public class Tifixity {
         return digest.toString();
     }
 
-    private static int BUFFERSIZE = 100;
-
     /**
-     * Returns the image payload checksumFile of the specified file's subfile.
-     * @param file      the TIFF file to checksumFile
-     * @param subfile   the subfile index (0 indexed)
+     * Returns image payload checksums for each subfile within the specified TIFF
+     * @param file
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    public static String checksumImage(String file, int subfile) throws IOException, NoSuchAlgorithmException {
+    public static String[] checksumImage(String file) throws IOException, NoSuchAlgorithmException {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
 
-        Integer[] rgbIndexes = tiff.getImageDataOffsets(0);
-        Integer[] rgbLengths = tiff.getImageDataLengths(0);
+        String[] checksums = new String[tiff.numberOfIFDs()];
 
-        assert(rgbIndexes.length == rgbLengths.length);
+        for(int i=0; i<tiff.numberOfIFDs(); i++){
+            checksums[i] = calculateImageDigest(tiff, i);
+        }
+
+        return checksums;
+    }
+
+    /**
+     * Returns the image payload checksum of the specified file's subfile.
+     * @param file      the TIFF file to checksum
+     * @param subFile   the subfile index (0 indexed)
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
+    public static String checksumImage(String file, int subFile)
+            throws IOException, NoSuchAlgorithmException {
+        Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
+        return calculateImageDigest(tiff, subFile); //checksumImage(tiff, file, subFile);
+    }
+
+    /**
+     * Calculates the checksum for the image in the specified file
+     * @param tiff
+     * @param subFile
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
+    private static String calculateImageDigest(Tiff tiff, int subFile)
+            throws IOException, NoSuchAlgorithmException {
+        if (tiff==null){
+            System.err.println("No TIFF file");
+            System.exit(-2);
+        }
+
+        Integer[] imageIndexes = tiff.getImageDataOffsets(subFile);
+        Integer[] imageLengths = tiff.getImageDataLengths(subFile);
+
+        assert(imageIndexes.length == imageLengths.length);
 
         MessageDigest md = MessageDigest.getInstance("MD5");
 
-        try (SeekableByteChannel sbc = Files.newByteChannel(Paths.get(file))) {
+        try (SeekableByteChannel sbc = Files.newByteChannel(tiff.getFilePath())) {
             ByteBuffer buf = ByteBuffer.allocate(BUFFERSIZE);
 
             int totalBytesRead;
             int bytesRead;
-            for(int j=0; j<rgbIndexes.length; j++){
+            for(int j=0; j<imageIndexes.length; j++){
                 // Do not assume split data is in sequential order in the file.
                 // jump to next position and read the data in
-                sbc.position(rgbIndexes[j]);
+                sbc.position(imageIndexes[j]);
                 buf.clear();
 
                 totalBytesRead=0;
                 bytesRead=0;
-                while(totalBytesRead < rgbLengths[j]){
+                while(totalBytesRead < imageLengths[j]){
                     bytesRead = sbc.read(buf);
                     buf.flip();
 
-                    if(totalBytesRead+bytesRead>=rgbLengths[j]){
-                        md.update(buf.array(), buf.position(), (rgbLengths[j]-totalBytesRead));
+                    if(totalBytesRead+bytesRead>=imageLengths[j]){
+                        md.update(buf.array(), buf.position(), (imageLengths[j]-totalBytesRead));
                     } else {
                         md.update(buf);
                     }
@@ -126,6 +163,19 @@ public class Tifixity {
         }
 
         return digest.toString();
+    }
+
+    /**
+     * Formats the output depending on user request. Default is to output string with just the checksum
+     * @return
+     */
+    private static String formatOutput(String[] checksums, String format){
+        StringBuilder output = new StringBuilder();
+        for(int i=0; i<checksums.length; i++){
+            output.append("[").append(i).append("] ");
+            output.append(checksums[i]).append("\n");
+        }
+        return output.toString();
     }
 
     /**
@@ -188,8 +238,8 @@ public class Tifixity {
 
         for(int i=0; i<files.length; i++){
             try {
-                String hash = checksumImage(files[i], 0);
-                System.out.println(hash);
+                String[] checksums = checksumImage(files[i]);
+                System.out.println(formatOutput(checksums, "String"));
             } catch (NoSuchFileException nsfe){
                 System.err.println("No such file: "+files[i]);
                 System.exit(-1);
