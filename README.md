@@ -9,7 +9,10 @@ for ensuring that the pixel data remains the same before and after some process.
 
 ## Features and roadmap
 
-### Versino 0.2.0
+### Version 0.3.0-SNAPSHOT
+* Supports calculation of full and partial (non-image-data) checksums
+
+### Version 0.2.0
 * Supports multi-image TIFF files
 * More robust CLI
 
@@ -44,9 +47,14 @@ After successful completion, the tifixity jar file will be in the target directo
 
 To use the tool, run the jar from the command line (from the Tifixity directory):
 ```bash
-$ java -jar target\tifixity-0.1.0-SNAPSHOT.jar src\test\resources\rgbstrips.tiff
+$ java -jar target\tifixity-0.3.0-SNAPSHOT.jar src\test\resources\rgbstrips.tiff
 ...
 5478865efdfc945d291b584402d34a33
+```
+
+Various command line options are available. Run the jar without a file to get help:
+```bash
+$ java -jar target\tifixity-0.3.0-SNAPSHOT.jar
 ```
 
 ### Setup IDE

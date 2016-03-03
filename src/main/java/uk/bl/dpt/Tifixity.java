@@ -28,49 +28,81 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.TreeMap;
 
 /**
  * Main application and Tifixity API.
  */
 public class Tifixity {
 
-    protected static boolean verbose = false;                   // Verbose output required
-    private static Properties properties = new Properties();    // Default properties. Contain details from POM.
+    protected static boolean allChecksums   = false;               // calculate full and non-image data checksums
+    protected static boolean verbose        = false;               // Verbose output required
+    private static Properties properties    = new Properties();    // Default properties. Contain details from POM.
 
     private static int BUFFERSIZE = 100;
 
     /**
-     * Returns the full checksum for the specified file.
+     * Calculates the full and non-image-data checksum for the specified file.
      * @param file
-     * @return
+     * @return  String[] first element is the full digest, 2nd element is the partial non-image data checksum
      * @throws NoSuchAlgorithmException
      * @throws IOException
      */
-    public static String checksumFile(String file) throws NoSuchAlgorithmException, IOException{
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        MessageDigest partialmd = MessageDigest.getInstance("MD5");
+    public static String[] checksumFile(String file) throws NoSuchAlgorithmException, IOException{
+        Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
 
-        try (InputStream is = Files.newInputStream(Paths.get(file))) {
-            DigestInputStream dis = new DigestInputStream(is, md);
-            DigestInputStream pdis = new DigestInputStream(dis, partialmd);
+        // get the full and partial digests
+        byte[][] digests = calculateFileDigest(tiff);
 
-            int count;
-            while ((count=dis.read()) > -1) {
-                count=pdis.read();
+        String[] checksums = new String[2];
+        for (int i=0; i<checksums.length; i++) {
+            StringBuilder digest = new StringBuilder();
+            for (byte b : digests[i]) {
+                digest.append(String.format("%02x", b));
             }
+            checksums[i] = digest.toString();
         }
 
-        StringBuilder digest = new StringBuilder();
-        for (byte b: md.digest()){
-            digest.append(String.format("%02x", b));
+        return checksums;
+    }
+
+
+    /**
+     * Calculates the full and non-image-data checksums for the specified TIFF.
+     * @param tiff
+     * @return
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     */
+    private static byte[][] calculateFileDigest(Tiff tiff) throws IOException, NoSuchAlgorithmException {
+
+        MessageDigest md = MessageDigest.getInstance("MD5");            // full checksum
+        MessageDigest md_rem = MessageDigest.getInstance("MD5");        // non-image-data checksum
+
+        try (InputStream is = Files.newInputStream(tiff.getFilePath())){
+            DigestInputStream dis = new DigestInputStream(is, md);
+            DigestInputStream pdis = new DigestInputStream(dis, md_rem);
+
+            TreeMap<Long, Boolean> structure = tiff.getStructure();
+            Iterator<Long> indexes = structure.navigableKeySet().iterator();
+            Long index = indexes.next();    // first index = 0
+
+            int count=0;
+            do {
+                // check if DigestInputStream should be on or off then increment count
+                if(count==index){
+                    pdis.on(!structure.get(index));  // turn on if not image data
+                    if (indexes.hasNext()) {
+                        index = indexes.next();
+                    }
+                }
+                count++;
+            } while (pdis.read() > -1);
         }
 
-//        digest.append("\n");
-//        for (byte b: partialmd.digest()){
-//            digest.append(String.format("%02x", b));
-//        }
-        return digest.toString();
+        return new byte[][]{md.digest(), md_rem.digest()};
     }
 
     /**
@@ -103,7 +135,7 @@ public class Tifixity {
     public static String checksumImage(String file, int subFile)
             throws IOException, NoSuchAlgorithmException {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
-        return calculateImageDigest(tiff, subFile); //checksumImage(tiff, file, subFile);
+        return calculateImageDigest(tiff, subFile);
     }
 
     /**
@@ -126,13 +158,16 @@ public class Tifixity {
 
         assert(imageIndexes.length == imageLengths.length);
 
+        // Message Digests
         MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md_rem = MessageDigest.getInstance("MD5");
 
         try (SeekableByteChannel sbc = Files.newByteChannel(tiff.getFilePath())) {
             ByteBuffer buf = ByteBuffer.allocate(BUFFERSIZE);
 
             int totalBytesRead;
             int bytesRead;
+
             for(int j=0; j<imageIndexes.length; j++){
                 // Do not assume split data is in sequential order in the file.
                 // jump to next position and read the data in
@@ -169,11 +204,17 @@ public class Tifixity {
      * Formats the output depending on user request. Default is to output string with just the checksum
      * @return
      */
-    private static String formatOutput(String[] checksums, String format){
+    private static String formatOutput(String fullCS, String partialCS, String[] imageCS, String format){
         StringBuilder output = new StringBuilder();
-        for(int i=0; i<checksums.length; i++){
+        if(allChecksums) {
+            output.append("Full MD5: ").append(fullCS).append("\n");
+            output.append("Remaining MD5: ").append(partialCS).append("\n");
+        }
+
+        output.append("Image MD5s:\n");
+        for(int i=0; i<imageCS.length; i++){
             output.append("[").append(i).append("] ");
-            output.append(checksums[i]).append("\n");
+            output.append(imageCS[i]).append("\n");
         }
         return output.toString();
     }
@@ -208,6 +249,7 @@ public class Tifixity {
         // Define options
         Options options = new Options();
         options.addOption("h", "help", false, "Print this message");
+        options.addOption("a", "all", false, "Additionally, calculate full and partial checksums (non-image data)");
         options.addOption("v", "verbose", false, "Print verbose output");
         options.addOption("version", "Print version");
 
@@ -216,6 +258,11 @@ public class Tifixity {
         CommandLine cmd = parser.parse(options, args);
 
         // Process arguments
+        if (cmd.hasOption("a")){
+            allChecksums=true;
+        }
+
+        // Verbose output
         if (cmd.hasOption("v")){
             verbose=true;
         }
@@ -238,8 +285,16 @@ public class Tifixity {
 
         for(int i=0; i<files.length; i++){
             try {
+                String[] cs = new String[2];
+
+                if(allChecksums){
+                    cs = checksumFile(files[i]);
+                }
+
                 String[] checksums = checksumImage(files[i]);
-                System.out.println(formatOutput(checksums, "String"));
+                System.out.println(formatOutput(cs[0], cs[1], checksums, "String"));
+
+
             } catch (NoSuchFileException nsfe){
                 System.err.println("No such file: "+files[i]);
                 System.exit(-1);

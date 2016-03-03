@@ -18,7 +18,7 @@ package uk.bl.dpt;
 
 import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Class representing a TIFF file.
@@ -29,12 +29,17 @@ public class Tiff {
     private ByteOrder   byteOrder   = null;
     ArrayList<IFD>      ifds        = null;
 
+    // An ordered index of byte offsets and whether they are the start of an image-data block (of bytes) or not.
+    // See {@link getStructure}
+    private TreeMap<Long, Boolean> structure = null;
+
     /**
      * Default, no-arg constructor. Default to Little Endian Byte order.
      */
     public Tiff(){
         this.ifds = new ArrayList<>();
         this.byteOrder = ByteOrder.LITTLE_ENDIAN;
+        this.structure = new TreeMap<>();
     }
 
     /**
@@ -57,6 +62,17 @@ public class Tiff {
         this(byteOrder);
         this.file = file;
     }
+
+    /**
+     * Tags the data at the specified offset onwards with
+     * @param offset    the byte offset in the file
+     * @param imageData the category of data at this portion of the file
+     */
+    public void addStructuralElement(Long offset, Boolean imageData){
+        structure.put(offset, imageData);
+    }
+
+
 
     /**
      * Sets the byte order of this TIFF file
@@ -115,6 +131,40 @@ public class Tiff {
         if(ifd!=null) {
             ifds.add(ifd);
         }
+    }
+
+    /**
+     * Constructs and returns an ordered index of byte offsets and whether they are the start of an image-data block
+     * (of bytes) or not.
+     * For example, <0, false> indicates that starting at byte offset 0, the data is not image-data. This continues
+     * until the next item in the TreeMap, e.g. <8, true>, which says that starting at byte 8, there is image data.
+     * And so on.
+     * @return
+     */
+    public TreeMap<Long, Boolean> getStructure(){
+        TreeMap<Long, Integer> imgStructure = new TreeMap<>();
+
+        // Create a TreeMap of image data offsets and lengths
+        for(int i=0; i<this.numberOfIFDs(); i++) {
+            Integer[] imgData = this.getImageDataOffsets(i);
+            Integer[] imgLength = this.getImageDataLengths(i);
+
+            for(int j=0; j<imgData.length; j++){
+                imgStructure.put((long) imgData[j], imgLength[j]);
+            }
+        }
+
+        // now invert and add to structure
+        addStructuralElement(0L, false);
+
+        Iterator<Long> keys = imgStructure.navigableKeySet().iterator();
+        while(keys.hasNext()){
+            Long key = keys.next();
+            addStructuralElement(key, true);
+            addStructuralElement((key+imgStructure.get(key)), false);
+        }
+
+        return structure;
     }
 
     /**

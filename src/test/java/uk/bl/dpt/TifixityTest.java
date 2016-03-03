@@ -42,6 +42,8 @@ import static org.junit.Assert.*;
  *  6) Image MD5 check for compressed single strip TIFF
  *  7) Image MD5 check for single strip bilevel TIFF
  *  8) Image MD5 check for two subfile single strip TIFF
+ *  9) Check MD5 for non-image data for single strip TIFF.
+ *  10) Check MD5 for non-image data for a two strip TIFF.
  */
 public class TifixityTest {
 
@@ -68,8 +70,8 @@ public class TifixityTest {
         try {
             URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = Tifixity.checksumFile(f.getPath());
-            assertEquals(singleStrip_CS, jtifcs);
+            String[] jtifcs = Tifixity.checksumFile(f.getPath());
+            assertEquals(singleStrip_CS, jtifcs[0]);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -249,6 +251,37 @@ public class TifixityTest {
             assertEquals(twoSubfileSingleStrip_CS_image[1], jtifcs[1]);
         } catch (Exception e) {
             fail("Exception "+e);
+        }
+    }
+
+    // 9: Checks the MD5 for the remaining non-image data within a single strip TIFF
+    private static String singleStripRemainder_CS = "743f4ed1528ead58ecfe8f35ff751c86";
+
+    @Test
+    public void checkSingleStripRemainder_MD5(){
+        try{
+            URL url = getClass().getResource(singleStrip);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] invcs = Tifixity.checksumFile(f.getPath());
+
+            assertEquals(singleStripRemainder_CS, invcs[1]);
+        } catch (Exception e) {
+            fail("Exception "+e);
+        }
+    }
+
+    // 10: Checks the MD5 for the remaining non-image data within a two strip TIFF
+    private static String twoStrips_nonseq_remainder_CS = "84302a6da744c2f672b09e02196c3572";
+
+    @Test
+    public void checkTwoSplitRemainder_MD5() {
+        try {
+            URL url = getClass().getResource(twoStrips_nonseq_normal);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] rgbcs = Tifixity.checksumFile(f.getPath());
+            assertEquals(twoStrips_nonseq_remainder_CS, rgbcs[1]);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

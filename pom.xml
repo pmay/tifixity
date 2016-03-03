@@ -6,7 +6,7 @@
 
     <groupId>uk.bl.dpt</groupId>
     <artifactId>tifixity</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0-SNAPSHOT</version>
 
     <name>Tifixity</name>
 
@@ -61,6 +61,16 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Enable git-flow for maven -->
+            <plugin>
+                <groupId>external.atlassian.jgitflow</groupId>
+                <artifactId>jgitflow-maven-plugin</artifactId>
+                <version>1.0-m5.1</version>
+                <configuration>
+                    <noDeploy>true</noDeploy>
+                </configuration>
             </plugin>
         </plugins>
 
