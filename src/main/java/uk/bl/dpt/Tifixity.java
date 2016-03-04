@@ -93,16 +93,8 @@ public class Tifixity {
 
         // Format to String[]
         String[] checksums = new String[2];
-        StringBuilder digest = new StringBuilder();
-        for (byte b : md.digest()) {
-            digest.append(String.format("%02x", b));
-        }
-        checksums[0] = digest.toString();
-        digest = new StringBuilder();
-        for (byte b : md_rem.digest()) {
-            digest.append(String.format("%02x", b));
-        }
-        checksums[1] = digest.toString();
+        checksums[0] = checksumAsString(md.digest());
+        checksums[1] = checksumAsString(md_rem.digest());
 
         return checksums;
     }
@@ -194,8 +186,17 @@ public class Tifixity {
             }
         }
 
+        return checksumAsString(md.digest());
+    }
+
+    /**
+     * Returns a String representation of the specified byte[] checksum.
+     * @param checksum
+     * @return
+     */
+    private static String checksumAsString(byte[] checksum){
         StringBuilder digest = new StringBuilder();
-        for (byte b: md.digest()){
+        for (byte b: checksum){
             digest.append(String.format("%02x", b));
         }
 
