@@ -44,6 +44,7 @@ import static org.junit.Assert.*;
  *  8) Image MD5 check for two subfile single strip TIFF
  *  9) Check MD5 for non-image data for single strip TIFF.
  *  10) Check MD5 for non-image data for a two strip TIFF.
+ *  11) Image MD5 check for single strip TIFF with exif metadata.
  */
 public class TifixityTest {
 
@@ -280,6 +281,26 @@ public class TifixityTest {
             File f = Paths.get(url.toURI()).toFile();
             String[] rgbcs = Tifixity.checksumFile(f.getPath());
             assertEquals(twoStrips_nonseq_remainder_CS, rgbcs[1]);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 11: Image MD5 check of single strip TIFF with exif metadata
+    private static String singleStripExif = "/T_one_strip_with_exif.tiff";
+    private static String singleStripExif_CS = "2c4d171cf23a234e1b2d0dde354d2069";
+    private static String singleStripExif_CS_RGB = "1d4808fbbc37c098520c4e927cccf332";
+
+    /**
+     * Check MD5 of image data when TIFF contains exif metadata
+     */
+    @Test
+    public void checkSingleStripExif_MD5() {
+        try {
+            URL url = getClass().getResource(singleStripExif);
+            File f = Paths.get(url.toURI()).toFile();
+            String jtifcs = Tifixity.checksumImage(f.getPath(), 0);
+            assertEquals(singleStripExif_CS_RGB, jtifcs);
         } catch (Exception e) {
             e.printStackTrace();
         }
