@@ -154,7 +154,6 @@ public class Tifixity {
 
         // Message Digests
         MessageDigest md = MessageDigest.getInstance("MD5");
-        MessageDigest md_rem = MessageDigest.getInstance("MD5");
 
         try (SeekableByteChannel sbc = Files.newByteChannel(tiff.getFilePath())) {
             ByteBuffer buf = ByteBuffer.allocate(BUFFERSIZE);
@@ -169,7 +168,6 @@ public class Tifixity {
                 buf.clear();
 
                 totalBytesRead=0;
-                bytesRead=0;
                 while(totalBytesRead < imageLengths[j]){
                     bytesRead = sbc.read(buf);
                     buf.flip();

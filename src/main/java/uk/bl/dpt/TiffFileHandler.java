@@ -129,8 +129,8 @@ public class TiffFileHandler {
         long curPosition = sbc.position();
 
         // add directory to IFD object
-        if (count>1 || type==IFDType.RATIONAL || type==IFDType.SRATIONAL) {
-            // value is a pointer
+        if (count*type.getNumBytes()>4){
+            // if number of bytes required for value is greater than 4, then value is a pointer
             Object[] values;
             switch(type){
                 case BYTE:
