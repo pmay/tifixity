@@ -54,18 +54,7 @@ public class Tifixity {
         Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(file));
 
         // get the full and partial digests
-        byte[][] digests = calculateFileDigest(tiff);
-
-        String[] checksums = new String[2];
-        for (int i=0; i<checksums.length; i++) {
-            StringBuilder digest = new StringBuilder();
-            for (byte b : digests[i]) {
-                digest.append(String.format("%02x", b));
-            }
-            checksums[i] = digest.toString();
-        }
-
-        return checksums;
+        return calculateFileDigest(tiff);
     }
 
 
@@ -76,7 +65,7 @@ public class Tifixity {
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    private static byte[][] calculateFileDigest(Tiff tiff) throws IOException, NoSuchAlgorithmException {
+    private static String[] calculateFileDigest(Tiff tiff) throws IOException, NoSuchAlgorithmException {
 
         MessageDigest md = MessageDigest.getInstance("MD5");            // full checksum
         MessageDigest md_rem = MessageDigest.getInstance("MD5");        // non-image-data checksum
@@ -102,7 +91,20 @@ public class Tifixity {
             } while (pdis.read() > -1);
         }
 
-        return new byte[][]{md.digest(), md_rem.digest()};
+        // Format to String[]
+        String[] checksums = new String[2];
+        StringBuilder digest = new StringBuilder();
+        for (byte b : md.digest()) {
+            digest.append(String.format("%02x", b));
+        }
+        checksums[0] = digest.toString();
+        digest = new StringBuilder();
+        for (byte b : md_rem.digest()) {
+            digest.append(String.format("%02x", b));
+        }
+        checksums[1] = digest.toString();
+
+        return checksums;
     }
 
     /**
@@ -224,8 +226,8 @@ public class Tifixity {
      * @param options
      */
     private static void printHelp(Options options){
-        String usage  = "java -jar "+properties.getProperty("project.jar")+" <tiff>";
-        String header = "Calculate the MD5 checksum of the image portion of the specified TIFF file\n\n";
+        String usage  = "java -jar "+properties.getProperty("project.jar")+" <tiffs>";
+        String header = "Calculate the MD5 checksum of the image portion of the specified TIFF file(s)\n\n";
         String footer = "\nPlease report issues at https://github.com/pmay/tifixity/issues";
 
         HelpFormatter helpformatter = new HelpFormatter();
