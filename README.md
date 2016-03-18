@@ -4,20 +4,25 @@ TIFF Image Data Checksummer
 
 ### What does Tifixity do?
 
-Checksums the image data portion of a TIFF file, as opposed to the entire TIFF file. Useful 
-for ensuring that the pixel data remains the same before and after some process.
+Primarily it calculates checksums for the image data portions of a TIFF file, as opposed to the entire TIFF file. This is useful for ensuring that the pixel data remains the same before and after some process.
+
+Tifixity is capable of calculating MD5 checksums for the following data sets:
+* Full file
+* each subfile's image data
+* Non-image data (i.e. remaining data; everything except image data)
+* each IFD (i.e. all bytes associated with an IFD's metadata)
 
 ## Features and roadmap
 
 ### Version 0.3.0-SNAPSHOT
 * Supports calculation of full and partial (non-image-data) checksums
+* Supports calculation of IFD checksums
 
 ### Version 0.2.0
 * Supports multi-image TIFF files
 * More robust CLI
 
 ### Version 0.1.0
-
 * Initial version
 
 ## How to install and use

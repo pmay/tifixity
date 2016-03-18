@@ -50,7 +50,7 @@ public class IFDTest {
     @Test
     public void nonSplitStripOffsetTest(){
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, 0L, new Integer[]{8});
         assertEquals(1, ifd.numberOfDirectoryEntries());
 
         IFD.DirectoryEntry<Integer> directoryEntry = ifd.getDirectoryEntry(IFDTag.StripOffsets);
@@ -64,7 +64,7 @@ public class IFDTest {
     @Test
     public void twoSplitStripOffsetTest(){
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, 0L, new Integer[]{8, 0x1e8});
         assertEquals(1, ifd.numberOfDirectoryEntries());
 
         IFD.DirectoryEntry<Integer> directoryEntry = ifd.getDirectoryEntry(IFDTag.StripOffsets);

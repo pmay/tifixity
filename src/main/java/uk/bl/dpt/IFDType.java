@@ -22,24 +22,26 @@ import java.util.HashMap;
  * Enumeration of TIFF v6 IFD DirectoryEntry Types
  */
 public enum IFDType {
-    BYTE ((short) 1),
-    ASCII ((short) 2),
-    SHORT ((short) 3),
-    LONG ((short) 4),
-    RATIONAL ((short) 5),
-    SBYTE ((short) 6),
-    UNDEFINED ((short) 7),
-    SSHORT ((short) 8),
-    SLONG ((short) 9),
-    SRATIONAL ((short) 10),
-    FLOAT ((short) 11),
-    DOUBLE ((short) 12);
+    BYTE ((short) 1, (short) 1),
+    ASCII ((short) 2, (short) 1),
+    SHORT ((short) 3, (short) 2),
+    LONG ((short) 4, (short) 4),
+    RATIONAL ((short) 5, (short) 8),
+    SBYTE ((short) 6, (short) 1),
+    UNDEFINED ((short) 7, (short) 1),
+    SSHORT ((short) 8, (short) 2),
+    SLONG ((short) 9, (short) 4),
+    SRATIONAL ((short) 10, (short) 8),
+    FLOAT ((short) 11, (short) 4),
+    DOUBLE ((short) 12, (short) 8);
 
     private static HashMap<Short, IFDType> lookup;
-    private final Short bytevalue;
+    private final Short bytevalue;                  // value assigned in the TIFF spec
+    private final Short numBytes;                   // number of bytes 1 unit of this type takes
 
-    IFDType(Short value){
+    IFDType(Short value, Short numBytes){
         this.bytevalue = value;
+        this.numBytes  = numBytes;
     }
 
     static {
@@ -55,5 +57,9 @@ public enum IFDType {
 
     public Short getTypeValue(){
         return this.bytevalue;
+    }
+
+    public Short getNumBytes(){
+        return this.numBytes;
     }
 }
