@@ -17,8 +17,11 @@
 package uk.bl.dpt;
 
 import org.junit.Test;
+import uk.bl.dpt.types.Rational;
 
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
@@ -37,9 +40,9 @@ import static org.junit.Assert.*;
  */
 public class TiffFileHandlerTest {
 
-    private static String testTiff        = "/rgbstrips.tiff";
-    private static String splitTestTiff   = "/rgbstrips_split_data.tiff";
-    private static String nonSeqSplitTiff = "/non_sequential_rgbstrips_split_data.tiff";
+    private static final String testTiff        = "/rgbstrips.tiff";
+    private static final String splitTestTiff   = "/rgbstrips_split_data.tiff";
+    private static final String nonSeqSplitTiff = "/non_sequential_rgbstrips_split_data.tiff";
 
     /**
      * 1: Tests that a TIFF with a single strip of RGB data can be read into a TIFF object.
@@ -119,6 +122,81 @@ public class TiffFileHandlerTest {
             assertArrayEquals(new Integer[]{150, 150}, rgbLength);
         } catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    // 5: Check Single Strip TIFF full IFD
+    private static final String singleStrip = "/T_one_strip.tiff";
+
+    @Test
+    public void checkSingleStripIFD(){
+        try{
+            URL url = getClass().getResource(singleStrip);
+            Tiff tiff = TiffFileHandler.loadTiffFromFile(Paths.get(url.toURI()));
+
+            assertEquals(1, tiff.numberOfIFDs());               // Only 1 IFD
+            IFD ifd = tiff.getIFD(0);
+
+            assertEquals(17, ifd.numberOfDirectoryEntries());
+            assertEquals(0, ifd.getDirectoryEntry(IFDTag.NewSubfileType).getValue()[0]);
+            assertEquals(318, ifd.getDirectoryEntry(IFDTag.NewSubfileType).getValueOffset());
+
+            assertEquals(10, ifd.getDirectoryEntry(IFDTag.ImageWidth).getValue()[0]);
+            assertEquals(330, ifd.getDirectoryEntry(IFDTag.ImageWidth).getValueOffset());
+
+            assertEquals(10, ifd.getDirectoryEntry(IFDTag.ImageLength).getValue()[0]);
+            assertEquals(342, ifd.getDirectoryEntry(IFDTag.ImageLength).getValueOffset());
+
+            assertArrayEquals(new Integer[]{8,8,8}, ifd.getDirectoryEntry(IFDTag.BitsPerSample).getValue());
+            assertEquals(518, ifd.getDirectoryEntry(IFDTag.BitsPerSample).getValueOffset());
+
+            assertEquals(1, ifd.getDirectoryEntry(IFDTag.Compression).getValue()[0]);
+            assertEquals(366, ifd.getDirectoryEntry(IFDTag.Compression).getValueOffset());
+
+            assertEquals(2, ifd.getDirectoryEntry(IFDTag.PhotometricInterpretation).getValue()[0]);
+            assertEquals(378, ifd.getDirectoryEntry(IFDTag.PhotometricInterpretation).getValueOffset());
+
+            assertArrayEquals(new Character[]{'C',':','\\','P','r','o','j','e','c','t','s','\\',
+                                              'D','P','T','\\','W','o','r','k','s','p','a','c','e','s','\\',
+                                              'T','i','f','f','D','a','t','a','C','h','e','c','k','s','u','m','\\',
+                                              't','e','s','t','\\','r','g','b','s','t','r','i','p','s','.','t','i','f','f','\0'},
+                              ifd.getDirectoryEntry(IFDTag.DocumentName).getValue());
+            assertEquals(524, ifd.getDirectoryEntry(IFDTag.DocumentName).getValueOffset());
+
+            assertArrayEquals(new Character[]{'C','r','e','a','t','e','d',' ','w','i','t','h',' ','G','I','M','P','\0'},
+                              ifd.getDirectoryEntry(IFDTag.ImageDescription).getValue());
+            assertEquals(588, ifd.getDirectoryEntry(IFDTag.ImageDescription).getValueOffset());
+
+            assertEquals(8, ifd.getDirectoryEntry(IFDTag.StripOffsets).getValue()[0]);
+            assertEquals(414, ifd.getDirectoryEntry(IFDTag.StripOffsets).getValueOffset());
+
+            assertEquals(1, ifd.getDirectoryEntry(IFDTag.Orientation).getValue()[0]);
+            assertEquals(426, ifd.getDirectoryEntry(IFDTag.Orientation).getValueOffset());
+
+            assertEquals(3, ifd.getDirectoryEntry(IFDTag.SamplesPerPixel).getValue()[0]);
+            assertEquals(438, ifd.getDirectoryEntry(IFDTag.SamplesPerPixel).getValueOffset());
+
+            assertEquals(64, ifd.getDirectoryEntry(IFDTag.RowsPerStrip).getValue()[0]);
+            assertEquals(450, ifd.getDirectoryEntry(IFDTag.RowsPerStrip).getValueOffset());
+
+            assertEquals(300, ifd.getDirectoryEntry(IFDTag.StripByteCounts).getValue()[0]);
+            assertEquals(462, ifd.getDirectoryEntry(IFDTag.StripByteCounts).getValueOffset());
+
+            Rational e = new Rational(72,1);
+            Rational r = (Rational) ifd.getDirectoryEntry(IFDTag.XResolution).getValue()[0];
+            assertEquals(new Rational(72,1), r);
+            assertEquals(606, ifd.getDirectoryEntry(IFDTag.XResolution).getValueOffset());
+
+            assertEquals(new Rational(72,1), ifd.getDirectoryEntry(IFDTag.YResolution).getValue()[0]);
+            assertEquals(614, ifd.getDirectoryEntry(IFDTag.YResolution).getValueOffset());
+
+            assertEquals(1, ifd.getDirectoryEntry(IFDTag.PlanarConfiguration).getValue()[0]);
+            assertEquals(498, ifd.getDirectoryEntry(IFDTag.PlanarConfiguration).getValueOffset());
+
+            assertEquals(2, ifd.getDirectoryEntry(IFDTag.ResolutionUnit).getValue()[0]);
+            assertEquals(510, ifd.getDirectoryEntry(IFDTag.ResolutionUnit).getValueOffset());
+        } catch (Exception e) {
+            fail("Exception "+e);
         }
     }
 }

@@ -60,8 +60,8 @@ public class TiffTest {
     public void nonSplitRGBTiff(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, 0L, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, 0L, new Integer[]{300});
         tiff.addIFD(ifd);
 
         assertEquals(1, tiff.numberOfIFDs());
@@ -84,8 +84,8 @@ public class TiffTest {
     public void nonSplitRGBConvenienceMethod(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, 0L, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, 0L, new Integer[]{300});
         tiff.addIFD(ifd);
 
         Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
@@ -103,8 +103,8 @@ public class TiffTest {
     public void twoSplitRGBConvenienceMethod(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, new Integer[]{8, 0x1e8});
-        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{150, 150});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 2, 0L, new Integer[]{8, 0x1e8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, 0L, new Integer[]{150, 150});
         tiff.addIFD(ifd);
 
         Integer[] rgbOffsets = tiff.getImageDataOffsets(0);
@@ -121,9 +121,9 @@ public class TiffTest {
     public void singleImageNoCompressionRetrieval(){
         Tiff tiff = new Tiff();
         IFD ifd = new IFD();
-        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, new Integer[]{8});
-        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, new Integer[]{300});
-        ifd.addDirectoryEntry(IFDTag.Compression, IFDType.SHORT, 1, new Integer[]{1});
+        ifd.addDirectoryEntry(IFDTag.StripOffsets, IFDType.LONG, 1, 0L, new Integer[]{8});
+        ifd.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.LONG, 1, 0L, new Integer[]{300});
+        ifd.addDirectoryEntry(IFDTag.Compression, IFDType.SHORT, 1, 0L, new Integer[]{1});
         tiff.addIFD(ifd);
 
         assertEquals((Integer) 1, (Integer) tiff.getCompression(0));
@@ -140,12 +140,12 @@ public class TiffTest {
         Tiff tiff = new Tiff();
 
         IFD ifd1 = new IFD();
-        ifd1.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, new Integer[]{8});
-        ifd1.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, new Integer[]{30});
+        ifd1.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, 0L, new Integer[]{8});
+        ifd1.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, 0L, new Integer[]{30});
 
         IFD ifd2 = new IFD();
-        ifd2.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, new Integer[]{16});
-        ifd2.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, new Integer[]{40});
+        ifd2.addDirectoryEntry(IFDTag.StripOffsets, IFDType.SHORT, 1, 0L, new Integer[]{16});
+        ifd2.addDirectoryEntry(IFDTag.StripByteCounts, IFDType.SHORT, 1, 0L, new Integer[]{40});
 
         tiff.addIFD(ifd1);
         tiff.addIFD(ifd2);

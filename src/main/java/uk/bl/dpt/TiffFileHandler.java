@@ -38,10 +38,21 @@ public class TiffFileHandler {
      * @return
      * @throws IOException
      */
-    public static Tiff loadTiffFromFile(Path file) throws IOException {
-        Tiff tiff = new Tiff(file, ByteOrder.LITTLE_ENDIAN);
+    public static Tiff loadTiffFromFile(String file) throws IOException {
+        Path filepath = Paths.get(file);
+        return loadTiffFromFile(filepath);
+    }
 
-        try (SeekableByteChannel sbc = Files.newByteChannel(file)) {//Paths.get(file))) {
+    /**
+     * Loads a TIFF file into the Tifixity data model.
+     * @param filepath
+     * @return
+     * @throws IOException
+     */
+    public static Tiff loadTiffFromFile(Path filepath) throws IOException {
+        Tiff tiff = new Tiff(filepath, ByteOrder.LITTLE_ENDIAN);
+
+        try (SeekableByteChannel sbc = Files.newByteChannel(filepath)) {
             ByteBuffer buf = ByteBuffer.allocate(8);
 
             // read TIFF header
@@ -122,37 +133,39 @@ public class TiffFileHandler {
         IFDType type = IFDType.getType(typeval);
 
         int count = buf.order(byteOrder).getInt();
-        //int[] value = new int[count];
 
-        Integer value[] = {buf.order(byteOrder).getInt()};
-
+        // get the current position within the file
         long curPosition = sbc.position();
 
-        // add directory to IFD object
+        // if value fits within the value offset field, then the IFDs valueOffset = curPosition
+        // if it does not, then the IFDs valueOffset = bytes 8-11
+        long offset = curPosition-4;        // curPosition is after reading in the 12byte IFD, so -4
         if (count*type.getNumBytes()>4){
-            // if number of bytes required for value is greater than 4, then value is a pointer
-            Object[] values;
-            switch(type){
-                case BYTE:
-                case ASCII:
-                    values = readArrayChar(sbc.position(value[0]), byteOrder, count);
-                    break;
-                case SHORT:
-                    values = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-                case RATIONAL:
-                    values = readArrayRational(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-                case LONG:
-                default:
-                    values = readArrayLong(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-            }
-            // add directory to IFD object
-            ifd.addDirectoryEntry(tagval, type, count, values);
-        } else {
-            ifd.addDirectoryEntry(tagval, type, count, value);
+            // value does not fit, so bytes 8-11 are a pointer
+            offset = buf.order(byteOrder).getInt();
         }
+
+        // now read the value at the specified offset in the file
+        // Note: this currently means bytes 8-11 are re-read if the value fits there.
+        Object[] values;
+        switch(type){
+            case BYTE:
+            case ASCII:
+                values = readArrayChar(sbc.position(offset), byteOrder, count);
+                break;
+            case SHORT:
+                values = readArrayShort(sbc.position(offset), byteOrder, type, count);
+                break;
+            case RATIONAL:
+                values = readArrayRational(sbc.position(offset), byteOrder, type, count);
+                break;
+            case LONG:
+            default:
+                values = readArrayLong(sbc.position(offset), byteOrder, type, count);
+                break;
+        }
+        // add directory to IFD object
+        ifd.addDirectoryEntry(tagval, type, count, offset, values);
 
         if(Tifixity.verbose) System.out.println(ifd.getDirectoryEntry(tagval).toString());
 
