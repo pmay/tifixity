@@ -4,7 +4,7 @@
 
     <groupId>uk.bl.dpt</groupId>
     <artifactId>tifixity</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.3.0</version>
 
     <name>Tifixity</name>
 
