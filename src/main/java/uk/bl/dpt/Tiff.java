@@ -18,7 +18,7 @@ package uk.bl.dpt;
 
 import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Class representing a TIFF file.
@@ -29,12 +29,17 @@ public class Tiff {
     private ByteOrder   byteOrder   = null;
     ArrayList<IFD>      ifds        = null;
 
+    // An ordered index of byte offsets and whether they are the start of an image-data block (of bytes) or not.
+    // See {@link getStructure}
+    private TreeMap<Long, Boolean> structure = null;
+
     /**
      * Default, no-arg constructor. Default to Little Endian Byte order.
      */
     public Tiff(){
         this.ifds = new ArrayList<>();
         this.byteOrder = ByteOrder.LITTLE_ENDIAN;
+        this.structure = new TreeMap<>();
     }
 
     /**
@@ -59,8 +64,19 @@ public class Tiff {
     }
 
     /**
+     * Tags the data at the specified offset onwards with
+     * @param offset    the byte offset in the file
+     * @param imageData the category of data at this portion of the file
+     */
+    public void addStructuralElement(Long offset, Boolean imageData){
+        structure.put(offset, imageData);
+    }
+
+
+
+    /**
      * Sets the byte order of this TIFF file
-     * @param byteOrder
+     * @param byteOrder the {@link java.nio.ByteOrder} of the TIFF file
      */
     public void setByteOrder(ByteOrder byteOrder){
         this.byteOrder = byteOrder;
@@ -93,7 +109,7 @@ public class Tiff {
 
     /**
      * Returns the IFD at the specified index.
-     * @param index
+     * @param index the index of the IFD to return
      * @return
      * @throws IndexOutOfBoundsException
      */
@@ -106,7 +122,7 @@ public class Tiff {
 
     /**
      * Adds the specified IFD to an ArrayList of IFDs in this TIFF
-     * @param ifd
+     * @param ifd   the IFD to add to this TIFF's list of IFDs
      */
     public void addIFD(IFD ifd){
         if(ifds==null){
@@ -115,6 +131,40 @@ public class Tiff {
         if(ifd!=null) {
             ifds.add(ifd);
         }
+    }
+
+    /**
+     * Constructs and returns an ordered index of byte offsets and whether they are the start of an image-data block
+     * (of bytes) or not.
+     * For example, &lt;0, false&gt; indicates that starting at byte offset 0, the data is not image-data. This continues
+     * until the next item in the TreeMap, e.g. &lt;8, true&gt;, which says that starting at byte 8, there is image data.
+     * And so on.
+     * @return
+     */
+    public TreeMap<Long, Boolean> getStructure(){
+        TreeMap<Long, Integer> imgStructure = new TreeMap<>();
+
+        // Create a TreeMap of image data offsets and lengths
+        for(int i=0; i<this.numberOfIFDs(); i++) {
+            Integer[] imgData = this.getImageDataOffsets(i);
+            Integer[] imgLength = this.getImageDataLengths(i);
+
+            for(int j=0; j<imgData.length; j++){
+                imgStructure.put((long) imgData[j], imgLength[j]);
+            }
+        }
+
+        // now invert and add to structure
+        addStructuralElement(0L, false);
+
+        Iterator<Long> keys = imgStructure.navigableKeySet().iterator();
+        while(keys.hasNext()){
+            Long key = keys.next();
+            addStructuralElement(key, true);
+            addStructuralElement((key+imgStructure.get(key)), false);
+        }
+
+        return structure;
     }
 
     /**
@@ -138,7 +188,7 @@ public class Tiff {
 
     /**
      * Returns the compression value associated for the specified subfile within this TIFF
-     * @param subfile
+     * @param subfile       the sub file index (IFD) to get the compressoin value from
      * @return
      */
     public Integer getCompression(int subfile){

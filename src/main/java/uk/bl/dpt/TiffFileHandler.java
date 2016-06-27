@@ -34,14 +34,25 @@ public class TiffFileHandler {
 
     /**
      * Loads a TIFF file into the Tifixity data model.
-     * @param file
+     * @param file  the TIFF file to load
      * @return
      * @throws IOException
      */
-    public static Tiff loadTiffFromFile(Path file) throws IOException {
-        Tiff tiff = new Tiff(file, ByteOrder.LITTLE_ENDIAN);
+    public static Tiff loadTiffFromFile(String file) throws IOException {
+        Path filepath = Paths.get(file);
+        return loadTiffFromFile(filepath);
+    }
 
-        try (SeekableByteChannel sbc = Files.newByteChannel(file)) {//Paths.get(file))) {
+    /**
+     * Loads a TIFF file into the Tifixity data model.
+     * @param filepath  the {@link java.nio.file.Path} to a TIFF file to load
+     * @return
+     * @throws IOException
+     */
+    public static Tiff loadTiffFromFile(Path filepath) throws IOException {
+        Tiff tiff = new Tiff(filepath, ByteOrder.LITTLE_ENDIAN);
+
+        try (SeekableByteChannel sbc = Files.newByteChannel(filepath)) {
             ByteBuffer buf = ByteBuffer.allocate(8);
 
             // read TIFF header
@@ -74,9 +85,9 @@ public class TiffFileHandler {
 
     /**
      * Reads the IFD from the specified channel and loads it into the specified TIFF object.
-     * @param sbc
-     * @param offset
-     * @param tiff
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the IFD from
+     * @param offset    the offset (in bytes) from the start of the file where the IFD is
+     * @param tiff      the {@link Tiff} object to load results into
      * @throws IOException
      */
     private static void readIFD(SeekableByteChannel sbc, long offset, Tiff tiff) throws IOException {
@@ -102,9 +113,9 @@ public class TiffFileHandler {
 
     /**
      * Reads each directory from the specified byte channel and loads into the specified IFD object.
-     * @param sbc
-     * @param byteOrder
-     * @param ifd
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the Directory from
+     * @param byteOrder the byte order of the bytes within the file
+     * @param ifd       the {@link IFD} to load the read data into
      * @throws IOException
      */
     private static void readDirectory(SeekableByteChannel sbc, ByteOrder byteOrder, IFD ifd) throws IOException {
@@ -122,37 +133,39 @@ public class TiffFileHandler {
         IFDType type = IFDType.getType(typeval);
 
         int count = buf.order(byteOrder).getInt();
-        //int[] value = new int[count];
 
-        Integer value[] = {buf.order(byteOrder).getInt()};
-
+        // get the current position within the file
         long curPosition = sbc.position();
 
-        // add directory to IFD object
-        if (count>1 || type==IFDType.RATIONAL || type==IFDType.SRATIONAL) {
-            // value is a pointer
-            Object[] values;
-            switch(type){
-                case BYTE:
-                case ASCII:
-                    values = readArrayChar(sbc.position(value[0]), byteOrder, count);
-                    break;
-                case SHORT:
-                    values = readArrayShort(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-                case RATIONAL:
-                    values = readArrayRational(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-                case LONG:
-                default:
-                    values = readArrayLong(sbc.position(value[0]), byteOrder, type, count);
-                    break;
-            }
-            // add directory to IFD object
-            ifd.addDirectoryEntry(tagval, type, count, values);
-        } else {
-            ifd.addDirectoryEntry(tagval, type, count, value);
+        // if value fits within the value offset field, then the IFDs valueOffset = curPosition
+        // if it does not, then the IFDs valueOffset = bytes 8-11
+        long offset = curPosition-4;        // curPosition is after reading in the 12byte IFD, so -4
+        if (count*type.getNumBytes()>4){
+            // value does not fit, so bytes 8-11 are a pointer
+            offset = buf.order(byteOrder).getInt();
         }
+
+        // now read the value at the specified offset in the file
+        // Note: this currently means bytes 8-11 are re-read if the value fits there.
+        Object[] values;
+        switch(type){
+            case BYTE:
+            case ASCII:
+                values = readArrayChar(sbc.position(offset), byteOrder, count);
+                break;
+            case SHORT:
+                values = readArrayShort(sbc.position(offset), byteOrder, type, count);
+                break;
+            case RATIONAL:
+                values = readArrayRational(sbc.position(offset), byteOrder, type, count);
+                break;
+            case LONG:
+            default:
+                values = readArrayLong(sbc.position(offset), byteOrder, type, count);
+                break;
+        }
+        // add directory to IFD object
+        ifd.addDirectoryEntry(tagval, type, count, offset, values);
 
         if(Tifixity.verbose) System.out.println(ifd.getDirectoryEntry(tagval).toString());
 
@@ -162,9 +175,9 @@ public class TiffFileHandler {
 
     /**
      * Reads a TIFF ASCII array from the specified byte channel and returns an array of Characters.
-     * @param sbc
-     * @param byteOrder
-     * @param length
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the character array from
+     * @param byteOrder the byte order of the bytes within the file
+     * @param length    the number of elements in the character array
      * @return
      * @throws IOException
      */
@@ -184,10 +197,10 @@ public class TiffFileHandler {
 
     /**
      * Reads a TIFF short array (16-bit unsigned integer) and returns an array of Integers
-     * @param sbc
-     * @param byteOrder
-     * @param type
-     * @param length
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the short array from
+     * @param byteOrder the byte order of the bytes within the file
+     * @param type      the IFDType of the elements in the array
+     * @param length    the number of elements in the short array
      * @return
      * @throws IOException
      */
@@ -207,10 +220,10 @@ public class TiffFileHandler {
 
     /**
      * Reads a TIFF Long array (32-bit unsigned integer) and returns an array of Integers
-     * @param sbc
-     * @param byteOrder
-     * @param type
-     * @param length
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the Long array from
+     * @param byteOrder the byte order of the bytes within the file
+     * @param type      the IFDType of the elements in the array
+     * @param length    the number of elements in the Long array
      * @return
      * @throws IOException
      */
@@ -230,10 +243,10 @@ public class TiffFileHandler {
 
     /**
      *
-     * @param sbc
-     * @param byteOrder
-     * @param type
-     * @param length
+     * @param sbc       the {@link java.nio.channels.SeekableByteChannel} to read the Rational array from
+     * @param byteOrder the byte order of the bytes within the file
+     * @param type      the IFDType of the elements in the array
+     * @param length    the number of elements in the Rational array
      * @return
      * @throws IOException
      */

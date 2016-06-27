@@ -42,6 +42,11 @@ import static org.junit.Assert.*;
  *  6) Image MD5 check for compressed single strip TIFF
  *  7) Image MD5 check for single strip bilevel TIFF
  *  8) Image MD5 check for two subfile single strip TIFF
+ *  9) Check MD5 for non-image data for single strip TIFF.
+ *  10) Check MD5 for non-image data for a two strip TIFF.
+ *  11) Image MD5 check for single strip TIFF with exif metadata.
+ *  12) IFD MD5 single strip Tiff
+ *  13) IFD MD5 of two subfile
  */
 public class TifixityTest {
 
@@ -57,7 +62,7 @@ public class TifixityTest {
 
     // 1: TIFF containing single Strip of RGB data
     private static String singleStrip = "/T_one_strip.tiff";
-    private static String singleStrip_CS = "d987f537e0e252df1ebb0427a2bd83c6";
+    private static String singleStrip_CS = "0c9e57b795262d11185345c9a172bb40";
     private static String singleStrip_CS_RGB = "1d4808fbbc37c098520c4e927cccf332";
 
     /**
@@ -68,8 +73,8 @@ public class TifixityTest {
         try {
             URL url = getClass().getResource(singleStrip);
             File f = Paths.get(url.toURI()).toFile();
-            String jtifcs = Tifixity.checksumFile(f.getPath());
-            assertEquals(singleStrip_CS, jtifcs);
+            String[] jtifcs = Tifixity.checksumFile(f.getPath());
+            assertEquals(singleStrip_CS, jtifcs[0]);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -251,4 +256,98 @@ public class TifixityTest {
             fail("Exception "+e);
         }
     }
+
+    // 9: Checks the MD5 for the remaining non-image data within a single strip TIFF
+    private static String singleStripRemainder_CS = "afcadda07883ba826540287cb4509284";
+
+    @Test
+    public void checkSingleStripRemainder_MD5(){
+        try{
+            URL url = getClass().getResource(singleStrip);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] invcs = Tifixity.checksumFile(f.getPath());
+
+            assertEquals(singleStripRemainder_CS, invcs[1]);
+        } catch (Exception e) {
+            fail("Exception "+e);
+        }
+    }
+
+    // 10: Checks the MD5 for the remaining non-image data within a two strip TIFF
+    private static String twoStrips_nonseq_remainder_CS = "84302a6da744c2f672b09e02196c3572";
+
+    @Test
+    public void checkTwoSplitRemainder_MD5() {
+        try {
+            URL url = getClass().getResource(twoStrips_nonseq_normal);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] rgbcs = Tifixity.checksumFile(f.getPath());
+            assertEquals(twoStrips_nonseq_remainder_CS, rgbcs[1]);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 11: Image MD5 check of single strip TIFF with exif metadata
+    private static String singleStripExif = "/T_one_strip_with_exif.tiff";
+    private static String singleStripExif_CS = "2c4d171cf23a234e1b2d0dde354d2069";
+    private static String singleStripExif_CS_RGB = "1d4808fbbc37c098520c4e927cccf332";
+
+    /**
+     * Check MD5 of image data when TIFF contains exif metadata
+     */
+    @Test
+    public void checkSingleStripExif_MD5() {
+        try {
+            URL url = getClass().getResource(singleStripExif);
+            File f = Paths.get(url.toURI()).toFile();
+            String jtifcs = Tifixity.checksumImage(f.getPath(), 0);
+            assertEquals(singleStripExif_CS_RGB, jtifcs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // 12: IFD MD5 single strip Tiff
+    private static String singleStripIFD_CS = "46d59a726eb4c1945acdd333969bb5bf";
+
+    /**
+     * Check MD5 of IFD data
+     */
+    @Test
+    public void checkSingleStripIFD_MD5() {
+        try {
+            URL url = getClass().getResource(singleStrip);
+            File f = Paths.get(url.toURI()).toFile();
+            String jtifcs = Tifixity.checksumIFD(f.getPath(), 0);
+            assertEquals(singleStripIFD_CS, jtifcs);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 13: IFD MD5 of two subfile
+    private static String[] twoSubfileSingleStrip_CS_ifd = new String[]{"1574fdfd58987e1f52d7d867d6f65362",
+            "ebf55a51ca852fb37661836019b60244"};
+
+    /**
+     * Checks the MD5 of a TIFF containing two subfile images
+     */
+    @Test
+    public void checkTwoSubfileSingleStrip_IFD_MD5(){
+        try{
+            URL url = getClass().getResource(twoSubfileSingleStrip);
+            File f = Paths.get(url.toURI()).toFile();
+            String[] jtifcs = Tifixity.checksumIFDs(f.getPath());
+
+            assertEquals(2, jtifcs.length);
+            assertEquals(twoSubfileSingleStrip_CS_ifd[0], jtifcs[0]);
+            assertEquals(twoSubfileSingleStrip_CS_ifd[1], jtifcs[1]);
+        } catch (Exception e) {
+            fail("Exception "+e);
+        }
+    }
+
+
 }

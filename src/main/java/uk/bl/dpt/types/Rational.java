@@ -35,4 +35,15 @@ public class Rational {
     public Integer getDenominator(){
         return this.denominator;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Rational rational = (Rational) o;
+
+        if(numerator!=rational.numerator) return false;
+        return (denominator==rational.denominator);
+    }
 }

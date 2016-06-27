@@ -19,6 +19,8 @@ package uk.bl.dpt;
 import uk.bl.dpt.types.Rational;
 
 import java.util.HashMap;
+import java.util.NavigableSet;
+import java.util.Set;
 
 /**
  * Class representing a TIFF IFD.
@@ -55,32 +57,32 @@ public class IFD {
 
     /**
      * Adds the specified IFDTag to the Directory.
-     * @param tag
-     * @param type
-     * @param count
-     * @param value
+     * @param tag   the IFDTag to add to the Directory
+     * @param type  the IFDType of the tag
+     * @param count the number of elements in the value
+     * @param value the value of the tag
      */
-    public void addDirectoryEntry(IFDTag tag, IFDType type, int count, Object[] value) {
-        this.addDirectoryEntry(tag.getTagValue(), type, count, value);
+    public void addDirectoryEntry(IFDTag tag, IFDType type, int count, long offset, Object[] value) {
+        this.addDirectoryEntry(tag.getTagValue(), type, count, offset, value);
     }
 
     /**
      * Adds the IFDTag specified by tagValue to the Directory.
-     * @param tagValue
-     * @param type
-     * @param count
-     * @param value
+     * @param tagValue  the tag number of the IFD Tag to add to the Directory
+     * @param type      the IFDType of the tag
+     * @param count     the number of elements in the value
+     * @param value     the value of the tag
      */
-    public void addDirectoryEntry(Integer tagValue, IFDType type, int count, Object[] value) {
+    public void addDirectoryEntry(Integer tagValue, IFDType type, int count, long offset, Object[] value) {
         switch(type){
             case ASCII:
-                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Character[]) value));
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, offset, (Character[]) value));
                 break;
             case RATIONAL:
-                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Rational[]) value));
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, offset, (Rational[]) value));
                 break;
             default:
-                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, (Integer[]) value));
+                directory.put(tagValue, new DirectoryEntry<>(tagValue, type, count, offset, (Integer[]) value));
         }
     }
 
@@ -91,6 +93,10 @@ public class IFD {
 //    public int getTagValue(IFDTag tag){
 //        return directories.get(tag).value[0];
 //    }
+
+    public Set<Integer> getDirectoryKeys(){
+        return directory.keySet();
+    }
 
     public DirectoryEntry getDirectoryEntry(IFDTag tag){
         return this.getDirectoryEntry(tag.getTagValue());
@@ -112,7 +118,6 @@ public class IFD {
      *                The Value is expected to begin on a word boundary; the corresponding
      *                Value Offset will thus be an even number. This file offset may
      *                point anywhere in the file, even after the image data.
-     * @param <T>
      */
     public class DirectoryEntry<T> {
         private IFDTag  tag;
@@ -120,20 +125,28 @@ public class IFD {
         private IFDType type;
         private int     count;
         private T[]     value;
+        private long    valueOffset;    // offset from start of file where value is stored
+        private boolean valueIsPointer;
 
         /**
          * Construct a new DirectoryEntry entry
-         * @param tagValue
-         * @param type
-         * @param count
-         * @param value
+         * @param tagValue  the tag number of the IFD Tag to add to the Directory
+         * @param type      the IFDType of the tag
+         * @param count     the number of elements in the value
+         * @param value     the value of the tag
          */
-        public DirectoryEntry(Integer tagValue, IFDType type, int count, T[] value){
+        public DirectoryEntry(Integer tagValue, IFDType type, int count, long valueOffset, T[] value){
             this.tag = IFDTag.getTag(tagValue);
             this.tagValue = tagValue;
             this.type = type;
             this.count = count;
             this.value = value;
+            this.valueOffset = valueOffset;
+            this.valueIsPointer = (count*type.getNumBytes()>4);    // true if value is a ptr.
+        }
+
+        public IFDType getType() {
+            return type;
         }
 
         public int getCount(){
@@ -144,11 +157,20 @@ public class IFD {
             return value;
         }
 
+        public long getValueOffset() {
+            return valueOffset;
+        }
+
+        public boolean isValuePointer(){
+            return valueIsPointer;
+        }
+
         public String toString(){
             StringBuffer buf = new StringBuffer("Tag: ").append(tag);
             buf.append(" (").append(tagValue).append(")");
             buf.append("\tType: ").append(type).append(" (").append(type.getTypeValue()).append(")");
             buf.append("\tCount: ").append(count);
+            buf.append("\tValue Loc: ").append(valueOffset);
             buf.append("\tValue: ");
 
             for(int j=0; j<value.length; j++){
