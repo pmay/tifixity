@@ -82,7 +82,7 @@ public enum IFDTag {
 
     /**
      * Returns the IFDTag associated with the specified value or UNKNOWN if not found.
-     * @param value
+     * @param value the id of the IFDTag to get
      * @return
      */
     public static IFDTag getTag(Integer value){

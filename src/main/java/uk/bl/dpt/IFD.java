@@ -57,10 +57,10 @@ public class IFD {
 
     /**
      * Adds the specified IFDTag to the Directory.
-     * @param tag
-     * @param type
-     * @param count
-     * @param value
+     * @param tag   the IFDTag to add to the Directory
+     * @param type  the IFDType of the tag
+     * @param count the number of elements in the value
+     * @param value the value of the tag
      */
     public void addDirectoryEntry(IFDTag tag, IFDType type, int count, long offset, Object[] value) {
         this.addDirectoryEntry(tag.getTagValue(), type, count, offset, value);
@@ -68,10 +68,10 @@ public class IFD {
 
     /**
      * Adds the IFDTag specified by tagValue to the Directory.
-     * @param tagValue
-     * @param type
-     * @param count
-     * @param value
+     * @param tagValue  the tag number of the IFD Tag to add to the Directory
+     * @param type      the IFDType of the tag
+     * @param count     the number of elements in the value
+     * @param value     the value of the tag
      */
     public void addDirectoryEntry(Integer tagValue, IFDType type, int count, long offset, Object[] value) {
         switch(type){
@@ -118,7 +118,6 @@ public class IFD {
      *                The Value is expected to begin on a word boundary; the corresponding
      *                Value Offset will thus be an even number. This file offset may
      *                point anywhere in the file, even after the image data.
-     * @param <T>
      */
     public class DirectoryEntry<T> {
         private IFDTag  tag;
@@ -131,10 +130,10 @@ public class IFD {
 
         /**
          * Construct a new DirectoryEntry entry
-         * @param tagValue
-         * @param type
-         * @param count
-         * @param value
+         * @param tagValue  the tag number of the IFD Tag to add to the Directory
+         * @param type      the IFDType of the tag
+         * @param count     the number of elements in the value
+         * @param value     the value of the tag
          */
         public DirectoryEntry(Integer tagValue, IFDType type, int count, long valueOffset, T[] value){
             this.tag = IFDTag.getTag(tagValue);

@@ -14,7 +14,7 @@ Tifixity is capable of calculating MD5 checksums for the following data sets:
 
 ## Features and roadmap
 
-### Version 0.3.0-SNAPSHOT
+### Version 0.3.0
 * Supports calculation of full and partial (non-image-data) checksums
 * Supports calculation of IFD checksums
 
