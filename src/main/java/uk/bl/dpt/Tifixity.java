@@ -46,7 +46,7 @@ public class Tifixity {
 
     /**
      * Calculates the full and non-image-data checksum for the specified file.
-     * @param file
+     * @param file  the TIFF file to checksum
      * @return  String[] first element is the full digest, 2nd element is the partial non-image data checksum
      * @throws NoSuchAlgorithmException
      * @throws IOException
@@ -61,7 +61,7 @@ public class Tifixity {
 
     /**
      * Calculates the full and non-image-data checksums for the specified TIFF.
-     * @param tiff
+     * @param tiff  the {@link Tiff} object to calculate the checksum on
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -102,7 +102,7 @@ public class Tifixity {
 
     /**
      * Returns image payload checksums for each subfile within the specified TIFF
-     * @param file
+     * @param file  the TIFF file to checksum
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -136,8 +136,8 @@ public class Tifixity {
 
     /**
      * Calculates the checksum for the image in the specified file
-     * @param tiff
-     * @param subFile
+     * @param tiff      the TIFF file to checksum
+     * @param subFile   the subfile index (0 indexed)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -191,7 +191,7 @@ public class Tifixity {
 
     /**
      * Calculates the checksums for each IFD
-     * @param file
+     * @param file  the TIFF file to checksum
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -211,8 +211,8 @@ public class Tifixity {
 
     /**
      * Calculates the checksum for the specified IFD
-     * @param file
-     * @param subFile
+     * @param file      the TIFF file to checksum
+     * @param subFile   the subfile index (0 indexed)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -225,8 +225,8 @@ public class Tifixity {
 
     /**
      * Calculates the checksum for the specified IFD
-     * @param tiff
-     * @param subFile
+     * @param tiff      the TIFF file to checksum
+     * @param subFile   the subfile index (0 indexed)
      * @return
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -282,7 +282,7 @@ public class Tifixity {
 
     /**
      * Returns a String representation of the specified byte[] checksum.
-     * @param checksum
+     * @param checksum  the byte array checksum
      * @return
      */
     private static String checksumAsString(byte[] checksum){
@@ -321,7 +321,7 @@ public class Tifixity {
 
     /**
      * Prints the Help menu
-     * @param options
+     * @param options   the CLI Options
      */
     private static void printHelp(Options options){
         String usage  = "java -jar "+properties.getProperty("project.jar")+" <tiffs>";
@@ -335,7 +335,7 @@ public class Tifixity {
 
     /**
      * Main application that checksums the image payload of the supplied TIFF file.
-     * @param args
+     * @param args  main CLI arguments list
      */
     public static void main(String[] args) throws ParseException{
         // Load Properties file containing references to version/filenames

@@ -76,7 +76,7 @@ public class Tiff {
 
     /**
      * Sets the byte order of this TIFF file
-     * @param byteOrder
+     * @param byteOrder the {@link java.nio.ByteOrder} of the TIFF file
      */
     public void setByteOrder(ByteOrder byteOrder){
         this.byteOrder = byteOrder;
@@ -109,7 +109,7 @@ public class Tiff {
 
     /**
      * Returns the IFD at the specified index.
-     * @param index
+     * @param index the index of the IFD to return
      * @return
      * @throws IndexOutOfBoundsException
      */
@@ -122,7 +122,7 @@ public class Tiff {
 
     /**
      * Adds the specified IFD to an ArrayList of IFDs in this TIFF
-     * @param ifd
+     * @param ifd   the IFD to add to this TIFF's list of IFDs
      */
     public void addIFD(IFD ifd){
         if(ifds==null){
@@ -136,8 +136,8 @@ public class Tiff {
     /**
      * Constructs and returns an ordered index of byte offsets and whether they are the start of an image-data block
      * (of bytes) or not.
-     * For example, <0, false> indicates that starting at byte offset 0, the data is not image-data. This continues
-     * until the next item in the TreeMap, e.g. <8, true>, which says that starting at byte 8, there is image data.
+     * For example, &lt;0, false&gt; indicates that starting at byte offset 0, the data is not image-data. This continues
+     * until the next item in the TreeMap, e.g. &lt;8, true&gt;, which says that starting at byte 8, there is image data.
      * And so on.
      * @return
      */
@@ -188,7 +188,7 @@ public class Tiff {
 
     /**
      * Returns the compression value associated for the specified subfile within this TIFF
-     * @param subfile
+     * @param subfile       the sub file index (IFD) to get the compressoin value from
      * @return
      */
     public Integer getCompression(int subfile){
